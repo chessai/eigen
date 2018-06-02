@@ -156,7 +156,7 @@ magicCode x = MagicCode (code x `xor` 0x45696730)
 #api1 mul,           "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
 #api1 diagonal,      "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
 #api1 transpose,     "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
--- #api1 inverse,       "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
+#api1 inverse,       "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
 #api1 adjoint,       "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
 #api1 conjugate,     "Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString"
 #api1 normalize,     "Ptr b -> CInt -> CInt -> IO CString"

@@ -7,7 +7,7 @@ You can control the number of thread that will be used using either the OpenMP A
 2. setNbThreads n
 
 Unless setNbThreads has been called, Eigen uses the number of threads specified by OpenMP.
-You can restore this bahavior by calling @setNbThreads n@
+You can restore this behaviour by calling @setNbThreads n@
 
 Currently, the following algorithms can make use of multi-threading: general matrix - matrix products PartialPivLU.
 -}
