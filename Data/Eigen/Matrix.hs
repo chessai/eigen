@@ -6,101 +6,101 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Eigen.Matrix (
-    -- * Matrix type
+module Data.Eigen.Matrix
+  ( -- * Matrix type
     -- | Matrix aliases follows Eigen naming convention
-    Matrix(..),
-    MatrixXf,
-    MatrixXd,
-    MatrixXcf,
-    MatrixXcd,
-    I.Elem,
-    I.CComplex,
-    valid,
+    Matrix(..)
+  , MatrixXf
+  , MatrixXd
+  , MatrixXcf
+  , MatrixXcd
+  , I.Elem
+  , I.CComplex
+  , valid
     -- * Matrix conversions
-    fromList,
-    toList,
-    fromFlatList,
-    toFlatList,
-    generate,
+  , fromList
+  , toList
+  , fromFlatList
+  , toFlatList
+  , generate
     -- * Standard matrices and special cases
-    empty,
-    null,
-    square,
-    zero,
-    ones,
-    identity,
-    constant,
-    random,
+  , empty
+  , null
+  , square
+  , zero
+  , ones
+  , identity
+  , constant
+  , random
     -- * Accessing matrix data
-    cols,
-    rows,
-    dims,
-    (!),
-    coeff,
-    unsafeCoeff,
-    col,
-    row,
-    block,
-    topRows,
-    bottomRows,
-    leftCols,
-    rightCols,
+  , cols
+  , rows
+  , dims
+  , (!)
+  , coeff
+  , unsafeCoeff
+  , col
+  , row
+  , block
+  , topRows
+  , bottomRows
+  , leftCols
+  , rightCols
     -- * Matrix properties
-    sum,
-    prod,
-    mean,
-    minCoeff,
-    maxCoeff,
-    trace,
-    norm,
-    squaredNorm,
-    blueNorm,
-    hypotNorm,
-    determinant,
+  , sum
+  , prod
+  , mean
+  , minCoeff
+  , maxCoeff
+  , trace
+  , norm
+  , squaredNorm
+  , blueNorm
+  , hypotNorm
+  , determinant
     -- * Generic reductions
-    fold,
-    fold',
-    ifold,
-    ifold',
-    fold1,
-    fold1',
+  , fold
+  , fold'
+  , ifold
+  , ifold'
+  , fold1
+  , fold1'
     -- * Boolean reductions
-    all,
-    any,
-    count,
+  , all
+  , any
+  , count
     -- * Basic matrix algebra
-    add,
-    sub,
-    mul,
+  , add
+  , sub
+  , mul
     -- * Mapping over elements
-    map,
-    imap,
-    filter,
-    ifilter,
+  , map
+  , imap
+  , filter
+  , ifilter
     -- * Matrix transformations
-    diagonal,
-    transpose,
-    --inverse,
-    adjoint,
-    conjugate,
-    normalize,
-    modify,
-    convert,
-    TriangularMode(..),
-    triangularView,
-    lowerTriangle,
-    upperTriangle,
+  , diagonal
+  , transpose
+  , inverse
+  , adjoint
+  , conjugate
+  , normalize
+  , modify
+  , convert
+  , TriangularMode(..)
+  , triangularView
+  , lowerTriangle
+  , upperTriangle
     -- * Matrix serialization
-    encode,
-    decode,
+  , encode
+  , decode
     -- * Mutable matrices
-    thaw,
-    freeze,
-    unsafeThaw,
-    unsafeFreeze,
+  , thaw
+  , freeze
+  , unsafeThaw
+  , unsafeFreeze
     -- * Raw pointers
-    unsafeWith,
+  , unsafeWith 
 ) where
 
 import qualified Prelude as P
@@ -541,10 +541,10 @@ diagonal = _unop (\(rows, cols) -> (min rows cols, 1)) I.diagonal
 
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
 -}
---inverse :: I.Elem a b => Matrix a b -> Matrix a b
---inverse m
---    | square m = _unop id I.inverse m
---    | otherwise = error "Matrix.inverse: non-square matrix"
+inverse :: I.Elem a b => Matrix a b -> Matrix a b
+inverse m
+    | square m = _unop id I.inverse m
+    | otherwise = error "Matrix.inverse: non-square matrix"
 
 -- | Adjoint of the matrix
 adjoint :: I.Elem a b => Matrix a b -> Matrix a b

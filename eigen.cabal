@@ -427,8 +427,8 @@ Test-Suite test-rank
     main-is:            test/rank.hs
     build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen
 
--- Test-Suite test-regression
---    type:               exitcode-stdio-1.0
---    main-is:            test/regression.hs
---    build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen
+Test-Suite test-regression
+    type:               exitcode-stdio-1.0
+    main-is:            test/regression.hs
+    build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen
 
