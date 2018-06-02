@@ -1,0 +1,69 @@
+LU:18:  *  - MatrixBase::inverse()
+src/Geometry/Translation.h:139:  Translation inverse() const { return Translation(-m_coeffs); }
+src/Geometry/Transform.h:1173:    res.matrix() = m.matrix().inverse();
+src/Geometry/Transform.h:1198:  * \sa MatrixBase::inverse()
+src/Geometry/Transform.h:1217:      res.matrix().template topLeftCorner<Dim,Dim>() = linear().inverse();
+src/Geometry/AngleAxis.h:116:  EIGEN_DEVICE_FUNC AngleAxis inverse() const
+src/Geometry/Rotation2D.h:98:  EIGEN_DEVICE_FUNC inline Rotation2D inverse() const { return Rotation2D(-m_angle); }
+src/Geometry/Hyperplane.h:221:      normal() = mat.inverse().transpose() * normal();
+src/Geometry/RotationBase.h:53:    EIGEN_DEVICE_FUNC inline Derived inverse() const { return derived().inverse(); }
+src/QR/ColPivHouseholderQR.h:321:    inline const Inverse<ColPivHouseholderQR> inverse() const
+src/Geometry/Quaternion.h:154:  EIGEN_DEVICE_FUNC Quaternion<Scalar> inverse() const;
+src/Geometry/Quaternion.h:664:EIGEN_DEVICE_FUNC inline Quaternion<typename internal::traits<Derived>::Scalar> QuaternionBase<Derived>::inverse() const
+src/Geometry/Quaternion.h:666:  // FIXME should this function be called multiplicativeInverse and conjugate() be called inverse() or opposite()  ??
+src/Geometry/Quaternion.h:691:  * \sa Quaternion2::inverse()
+src/LU/FullPivLU.h:57:  * \sa MatrixBase::fullPivLu(), MatrixBase::determinant(), MatrixBase::inverse()
+src/LU/FullPivLU.h:238:      * \sa TriangularView::solve(), kernel(), inverse()
+src/LU/FullPivLU.h:398:      * \sa MatrixBase::inverse()
+src/LU/FullPivLU.h:400:    inline const Inverse<FullPivLU> inverse() const
+src/LU/FullPivLU.h:605:  res = m_p.inverse() * res;
+src/LU/FullPivLU.h:608:  res = res * m_q.inverse();
+src/LU/FullPivLU.h:820:  c = permutationQ().inverse() * rhs;
+src/LU/FullPivLU.h:847:  PermutationPType invp = permutationP().inverse().eval();
+src/LU/FullPivLU.h:859:/***** Implementation of inverse() *****************************************************/
+src/QR/FullPivHouseholderQR.h:312:    inline const Inverse<FullPivHouseholderQR> inverse() const
+src/QR/CompleteOrthogonalDecomposition.h:273:   * \warning: Do not compute \c this->pseudoInverse()*rhs to solve a linear systems.
+src/QR/CompleteOrthogonalDecomposition.h:276:  inline const Inverse<CompleteOrthogonalDecomposition> pseudoInverse() const
+src/LU/PartialPivLU.h:65:  * This LU decomposition is suitable to invert invertible matrices. It is what MatrixBase::inverse() uses
+src/LU/PartialPivLU.h:73:  * \sa MatrixBase::partialPivLu(), MatrixBase::determinant(), MatrixBase::inverse(), MatrixBase::computeInverse(), class FullPivLU
+src/LU/PartialPivLU.h:170:      * \sa TriangularView::solve(), inverse(), computeInverse()
+src/LU/PartialPivLU.h:195:      * \sa MatrixBase::inverse(), LU::inverse()
+src/LU/PartialPivLU.h:197:    inline const Inverse<PartialPivLU> inverse() const
+src/LU/PartialPivLU.h:557:  res = m_p.inverse() * res;
+src/LU/PartialPivLU.h:566:/***** Implementation of inverse() *****************************************************/
+src/SVD/SVDBase.h:268:  tmp = m_singularValues.head(l_rank).asDiagonal().inverse() * tmp;
+src/LU/InverseImpl.h:28:    result = matrix.partialPivLu().inverse();
+src/LU/InverseImpl.h:288:// Specialization for "dense = dense_xpr.inverse()"
+src/LU/InverseImpl.h:303:              && "Aliasing problem detected in inverse(), you need to do inverse().eval() here.");
+src/LU/InverseImpl.h:335:inline const Inverse<Derived> MatrixBase<Derived>::inverse() const
+src/LU/InverseImpl.h:358:  * \sa inverse(), computeInverseWithCheck()
+src/LU/InverseImpl.h:397:  * \sa inverse(), computeInverseAndDetWithCheck()
+src/SparseLU/SparseLU.h:238:        X.col(j) = colsPermutation().inverse() * X.col(j);
+src/SparseLU/SparseLU.h:508:  //   m_mat = matrix * m_perm_c.inverse(); 
+src/SparseLU/SparseLU.h:568:  PermutationType iperm_c(m_perm_c.inverse()); 
+src/SparseLU/SparseLU_heap_relax_snode.h:53:  for (StorageIndex i = 0; i < n+1; ++i) inv_post(post(i)) = i; // inv_post = post.inverse()???
+src/Geometry/Scaling.h:99:  inline UniformScaling inverse() const
+src/Core/Transpositions.h:108:    inline Transpose<TranspositionsBase> inverse() const
+src/Core/DiagonalMatrix.h:69:    inverse() const
+src/Core/DiagonalMatrix.h:71:      return InverseReturnType(diagonal().cwiseInverse());
+src/Core/PermutationMatrix.h:196:    inline InverseReturnType inverse() const
+src/Core/functors/UnaryFunctors.h:591:  * \sa class CwiseUnaryOp, Cwise::inverse()
+src/Core/MatrixBase.h:332:    //inline const Inverse<Derived> inverse() const;
+src/Core/MatrixBase.h:333:    const Inverse<Derived> inverse() const;
+src/Core/Inverse.h:38:  * This class represents an abstract expression of A.inverse()
+src/Householder/HouseholderSequence.h:252:    AdjointReturnType inverse() const { return adjoint(); }
+src/SparseCholesky/SimplicialCholesky.h:173:        dest = m_diag.asDiagonal().inverse() * dest;
+src/SparseCholesky/SimplicialCholesky.h:611:        dest = Base::m_diag.asDiagonal().inverse() * dest;
+src/SparseCholesky/SimplicialCholesky.h:666:    if(m_Pinv.size()>0) m_P = m_Pinv.inverse();
+src/SparseQR/SparseQR.h:327:  m_outputPerm_c = m_perm_c.inverse();
+src/SparseQR/SparseQR.h:368:    m_outputPerm_c = m_perm_c.inverse();
+src/Eigenvalues/SelfAdjointEigenSolver.h:323:      * then its inverse with MatrixBase::inverse().
+src/Eigenvalues/SelfAdjointEigenSolver.h:328:      * \sa operatorSqrt(), MatrixBase::inverse(), <a href="unsupported/group__MatrixFunctions__Module.html">MatrixFunctions Module</a>
+src/Eigenvalues/SelfAdjointEigenSolver.h:335:      return m_eivec * m_eivalues.cwiseInverse().cwiseSqrt().asDiagonal() * m_eivec.adjoint();
+src/IterativeLinearSolvers/IncompleteCholesky.h:122:      if(pinv.size()>0) m_perm = pinv.inverse();
+src/IterativeLinearSolvers/IncompleteCholesky.h:165:        x = m_perm.inverse() * x;
+src/IterativeLinearSolvers/IncompleteLUT.h:237:  m_Pinv  = m_P.inverse(); // cache the inverse permutation
+src/IterativeLinearSolvers/IncompleteLUT.h:243:  m_P = m_Pinv.inverse();
+src/plugins/MatrixCwiseUnaryOps.h:83:cwiseInverse() const { return CwiseInverseReturnType(derived()); }
+src/plugins/MatrixCwiseBinaryOps.h:126:  * \sa class CwiseBinaryOp, cwiseProduct(), cwiseInverse()
+src/plugins/ArrayCwiseUnaryOps.h:347:inverse() const

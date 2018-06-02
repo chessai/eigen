@@ -1,4 +1,3 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-# LANGUAGE CPP #-} 
@@ -17,8 +16,7 @@ import Foreign.Storable
 import Foreign.C.Types
 import Foreign.C.String
 import Control.Monad
-#if __GLASGOW_HASKELL__ >= 710
-#else
+#if !(__GLASGOW_HASKELL__ >= 710)
 import Control.Applicative
 #endif
 import System.IO.Unsafe

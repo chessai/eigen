@@ -19,6 +19,6 @@ main = do
         compute a
         x <- solve b
         info >>= lift.print
-        determinant >>= lift.print
+        determinant >>= lift . print
         lift $ putStrLn "The solution is:"
         lift $ print x

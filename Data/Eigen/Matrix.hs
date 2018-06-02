@@ -81,7 +81,7 @@ module Data.Eigen.Matrix (
     -- * Matrix transformations
     diagonal,
     transpose,
-    inverse,
+    --inverse,
     adjoint,
     conjugate,
     normalize,
@@ -541,10 +541,10 @@ diagonal = _unop (\(rows, cols) -> (min rows cols, 1)) I.diagonal
 
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
 -}
-inverse :: I.Elem a b => Matrix a b -> Matrix a b
-inverse m
-    | square m = _unop id I.inverse m
-    | otherwise = error "Matrix.inverse: non-square matrix"
+--inverse :: I.Elem a b => Matrix a b -> Matrix a b
+--inverse m
+--    | square m = _unop id I.inverse m
+--    | otherwise = error "Matrix.inverse: non-square matrix"
 
 -- | Adjoint of the matrix
 adjoint :: I.Elem a b => Matrix a b -> Matrix a b

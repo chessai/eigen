@@ -1,5 +1,6 @@
 #include "eigen-dense.h"
 #include <Eigen/Core>
+#include <Eigen/LU>
 
 using namespace Eigen;
 
@@ -47,7 +48,7 @@ BINOP(sub,-);
 BINOP(mul,*);
 
 #define PROP(name) \
-extern "C" RET eigen_##name(int code, void* q, const void* p, int r, int c) {\
+extern "C" RET __attribute__ ((noinline)) eigen_##name(int code, void* q, const void* p, int r, int c) {\
         GUARD_START\
         switch (code) {\
             case 0: *(T0*)q = matrix<T0>(p,r,c).name(); break;\
@@ -69,7 +70,7 @@ PROP(trace);
 PROP(determinant);
 
 #define UNOP(name) \
-extern "C" RET eigen_##name(int code, void* p, int r, int c, const void* p1, int r1, int c1) {\
+extern "C" RET __attribute__((noinline)) eigen_##name(int code, void* p, int r, int c, const void* p1, int r1, int c1) {\
         GUARD_START\
         switch (code) {\
             case 0: matrix<T0>(p,r,c) = matrix<T0>(p1,r1,c1).name(); break;\

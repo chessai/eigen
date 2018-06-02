@@ -1,4 +1,6 @@
 #include "eigen-runtime.h"
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 extern "C" {
 
