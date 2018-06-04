@@ -78,6 +78,7 @@ tested-with:
     GHC == 8.2.2
   , GHC == 8.4.3
 extra-source-files:
+    cbits/eigen-fft.h 
     cbits/eigen-runtime.h
     cbits/eigen-dense.h
     cbits/eigen-la.h
@@ -507,6 +508,7 @@ extra-source-files:
 	eigen3/unsupported/Eigen/IterativeSolvers
 	eigen3/unsupported/Eigen/KroneckerProduct
 	eigen3/unsupported/Eigen/FFT
+	eigen3/unsupported/Eigen/.FFT.swp
 	eigen3/unsupported/Eigen/AlignedVector3
 	eigen3/unsupported/Eigen/LevenbergMarquardt
 	eigen3/unsupported/Eigen/MPRealSupport
@@ -712,12 +714,12 @@ source-repository head
 library
   exposed-modules:
       Data.Eigen.Internal
-      Data.Eigen.LA
+      -- Data.Eigen.LA
       Data.Eigen.Matrix
       Data.Eigen.Matrix.Mutable
       Data.Eigen.Parallel
-      Data.Eigen.SparseLA
-      Data.Eigen.SparseMatrix
+      -- Data.Eigen.SparseLA
+      -- Data.Eigen.SparseMatrix
       Data.Eigen.SparseMatrix.Mutable
 
   ghc-options:
@@ -736,6 +738,7 @@ library
       eigen3
     , cbits
   c-sources:
+    cbits/eigen-fft.cpp
     cbits/eigen-runtime.cpp
     cbits/eigen-dense.cpp
     cbits/eigen-sparse.cpp

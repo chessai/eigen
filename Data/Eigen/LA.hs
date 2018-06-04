@@ -51,7 +51,7 @@ Matrix 3x1
 
 Checking if a solution really exists: Only you know what error margin you want to allow for a solution to be considered valid.
 
-You can compute relative error using @'norm' (ax - b) / 'norm' b@ formula or use 'relativeError' function which provides the same calculation implemented slightly more efficient.
+You can compute relative error using @'norm' (ax - b) / 'norm' b@ formula or use the 'relativeError' function which provides the same calculation implemented slightly more efficient.
 
 -}
 
@@ -248,15 +248,14 @@ main = print $ linearRegression [
  @
 
 -}
-linearRegression :: [[Double]] -> ([Double], Double)
-linearRegression points = (coeffs, e) where
+linearRegression :: [[Double]]
+                 -> ([Double], Double)
+linearRegression []     = ([], 0)
+linearRegression [[]]   = ([], 0)
+linearRegression points = (coeffs, e)
+  where
     a = fromList $ P.map ((1:).tail) points
     b = fromList $ P.map ((:[]).head) points
     x = solve ColPivHouseholderQR a b
     e = relativeError x a b
     coeffs = P.map head $ toList x
-
-
-
-
-

@@ -1,58 +1,73 @@
-{-# LANGUAGE GADTs, RecordWildCards, ScopedTypeVariables #-}
-module Data.Eigen.SparseMatrix.Mutable (
-    -- * Mutable SparseMatrix
-    IOSparseMatrix(..),
-    IOSparseMatrixXf,
-    IOSparseMatrixXd,
-    IOSparseMatrixXcf,
-    IOSparseMatrixXcd,
-    new,
-    reserve,
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeInType          #-}
+{-# LANGUAGE TypeOperators       #-}
+
+module Data.Eigen.SparseMatrix.Mutable
+  ( -- * Mutable SparseMatrix
+    IOSparseMatrix(..)
+  , IOSparseMatrixXf
+  , IOSparseMatrixXd
+  , IOSparseMatrixXcf
+  , IOSparseMatrixXcd
+    
+    --new,
+    --reserve,
     -- * Matrix properties
-    rows,
-    cols,
-    innerSize,
-    outerSize,
-    nonZeros,
+    --rows,
+    --cols,
+    --innerSize,
+    --outerSize,
+    --nonZeros,
     -- * Matrix compression
-    compressed,
-    compress,
-    uncompress,
+    --compressed,
+    --compress,
+    --uncompress,
     -- * Accessing matrix data
-    read,
-    write,
-    setZero,
-    setIdentity,
+    --read,
+    --write,
+    --setZero,
+    --setIdentity,
     -- * Changing matrix shape
-    resize,
-    conservativeResize
-) where
+    --resize,
+    --conservativeResize
+  ) where
 
 import Prelude hiding (read)
 import Data.Complex
+import Data.Kind (Type)
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.ForeignPtr
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
+import GHC.TypeLits
 import qualified Foreign.Concurrent as FC
 import qualified Data.Eigen.Internal as I
 
 -- | Mutable version of sparse matrix. See `Data.Eigen.SparseMatrix.SparseMatrix` for details about matrix layout.
-data IOSparseMatrix a b where
-    IOSparseMatrix :: I.Elem a b => !(ForeignPtr (I.CSparseMatrix a b)) -> IOSparseMatrix a b
+-- FIXME: switch to ST?
+
+data IOSparseMatrix :: Nat -> Nat -> Type -> Type where
+  IOSparseMatrix :: I.Elem a => !(ForeignPtr (I.CSparseMatrix a)) -> IOSparseMatrix n m a
+
+--data IOSparseMatrix a b where
+--    IOSparseMatrix :: I.Elem a b => !(ForeignPtr (I.CSparseMatrix a b)) -> IOSparseMatrix a b
 
 -- | Alias for single precision mutable matrix
-type IOSparseMatrixXf = IOSparseMatrix Float CFloat
+type IOSparseMatrixXf  n m = IOSparseMatrix n m Float
 -- | Alias for double precision mutable matrix
-type IOSparseMatrixXd = IOSparseMatrix Double CDouble
+type IOSparseMatrixXd  n m = IOSparseMatrix n m Double
 -- | Alias for single previsiom mutable matrix of complex numbers
-type IOSparseMatrixXcf = IOSparseMatrix (Complex Float) (I.CComplex CFloat)
+type IOSparseMatrixXcf n m = IOSparseMatrix n m (Complex Float)
 -- | Alias for double prevision mutable matrix of complex numbers
-type IOSparseMatrixXcd = IOSparseMatrix (Complex Double) (I.CComplex CDouble)
+type IOSparseMatrixXcd n m = IOSparseMatrix n m (Complex Double)
 
-
+{-
 -- | Creates new matrix with the given size @rows x cols@
 new :: I.Elem a b => Int -> Int -> IO (IOSparseMatrix a b)
 new rows cols = alloca $ \pm -> do
@@ -141,4 +156,4 @@ _prop f g (IOSparseMatrix fp) =
         alloca $ \pq -> do
             I.call (f p pq)
             peek pq >>= g
-
+-}

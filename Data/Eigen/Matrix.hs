@@ -26,8 +26,10 @@ module Data.Eigen.Matrix
   , MatrixXd
   , MatrixXcf
   , MatrixXcd
-  , I.Elem
-  , I.CComplex
+  --, I.Elem
+  --, I.CComplex
+  
+{- 
   , valid
     -- * Matrix conversions
   , fromList
@@ -113,7 +115,8 @@ module Data.Eigen.Matrix
   , unsafeFreeze
     -- * Raw pointers
   , unsafeWith 
-) where
+-} 
+  ) where
 
 import Control.Monad
 import Control.Monad.Primitive
@@ -121,8 +124,6 @@ import Control.Monad.ST
 import Data.Binary hiding (encode, decode)
 import Data.Complex hiding (conjugate)
 import Data.Proxy (Proxy(Proxy))
-import Data.Singletons
-import Data.Singletons.TypeLits hiding (natVal)
 import Data.Tuple
 import Data.Typeable
 import Foreign.C.String
@@ -138,7 +139,8 @@ import Text.Printf
 import Unsafe.Coerce
 import qualified Data.Binary as B
 import qualified Data.ByteString.Lazy as BSL
-import qualified Data.Eigen.Internal as I
+import Data.Eigen.Internal
+import Data.Kind (Type)
 import qualified Data.Eigen.Matrix.Mutable as M
 import qualified Data.List as L
 import qualified Data.Text.Prettyprint.Doc as PP
@@ -147,35 +149,54 @@ import qualified Data.Vector.Storable.Mutable as VSM
 import qualified Prelude as P
 
 -- | Matrix to be used in pure computations, uses column major memory layout, features copy-free FFI with C++ <http://eigen.tuxfamily.org Eigen> library.
-data Matrix a b where
-    Matrix :: I.Elem a b => !Int -> !Int -> !(VS.Vector b) -> Matrix a b
+
+--data Matrix :: Nat -> Nat -> Type -> Type where
+--  Matrix :: I.Elem a => 
+
+data Matrix :: Nat -> Nat -> Type -> Type where
+  Matrix :: Elem a => Vec (n * m) a -> Matrix n m a
+
+data Vec :: Nat -> Type -> Type where
+  Vec :: Elem a => VS.Vector (C a) -> Vec n a
+
+--data Matrix a b where
+--    Matrix :: I.Elem a b => !Int -> !Int -> !(VS.Vector b) -> Matrix a b
 
 -- | Alias for single precision matrix
-type MatrixXf = Matrix Float CFloat
+type MatrixXf  n m = Matrix n m Float
 -- | Alias for double precision matrix
-type MatrixXd = Matrix Double CDouble
--- | Alias for single previsiom matrix of complex numbers
-type MatrixXcf = Matrix (Complex Float) (I.CComplex CFloat)
--- | Alias for double prevision matrix of complex numbers
-type MatrixXcd = Matrix (Complex Double) (I.CComplex CDouble)
+type MatrixXd  n m = Matrix n m Double
+-- | Alias for single precision matrix of complex numbers
+type MatrixXcf n m = Matrix n m (Complex Float)
+-- | Alias for double precision matrix of complex numbers
+type MatrixXcd n m = Matrix n m (Complex Double)
 
+{-# INLINE _vals #-}
+_vals :: Elem a
+      => Matrix n m a
+      -> VS.Vector (C a)
+_vals (Matrix (Vec vals)) = vals
+
+{-
 -- | Pretty prints the matrix
 instance (I.Elem a b, Show a) => Show (Matrix a b) where
     show m@(Matrix rows cols _) = concat [
         "Matrix ", show rows, "x", show cols,
         "\n", L.intercalate "\n" $ P.map (L.intercalate "\t" . P.map show) $ toList m, "\n"]
 
--- | Basic matrix math exposed through Num instance: @(*)@, @(+)@, @(-)@, `fromInteger`, `signum`, `abs`, `negate`
-instance I.Elem a b => Num (Matrix a b) where
-    (*) = mul
-    (+) = add
-    (-) = sub
-    fromInteger = constant 1 1 . fromInteger
-    signum = map signum
-    abs = map abs
-    negate = map negate
+instance Elem a => Num (Matrix n m a) where
+  (*) = mul
+  (+) = add
+  (-) = sub
+  fromInteger = constant 1 1 . fromInteger
+  signum = map signum
+  abs = map abs
+  negate = map negate
 
 -- | Matrix binary serialization
+instance Elem a => Binary (Matrix n m a) where
+  
+
 instance I.Elem a b => Binary (Matrix a b) where
     put (Matrix rows cols vals) = do
         put $ I.magicCode (undefined :: b)
@@ -505,6 +526,12 @@ mul m1 m2
     | cols m1 == rows m2 = _binop (\(rows, _) (_, cols) -> (rows, cols)) I.mul m1 m2
     | otherwise = error "Matrix.mul: number of columns for lhs matrix should be the same as number of rows for rhs matrix"
 
+mul :: Elem a => Matrix p q -> Matrix q r -> Matrix p r
+mul m1 m2 = undefined
+
+--(p * q) * (q * r) = (p * r)
+--(1 * 3) * (3 * 4) = (1 * 4); (p * q) * (q * r) = (p * r)
+
 {- | Apply a given function to each element of the matrix.
 
 Here is an example how to implement scalar matrix multiplication:
@@ -694,6 +721,14 @@ _binop f g m1 m2 = I.performIO $ do
     unsafeFreeze m0
 
 {-# INLINE _unop #-}
+_unop
+  :: Elem a
+  => ((Int, Int) -> (Int, Int))
+  -> (Ptr (C a) -> CInt -> CInt -> Ptr (C a) -> CInt -> CInt -> IO CString)
+  -> Matrix n m a
+  -> Matrix n m a
+_unop f g m1 = I.performIO $ do
+
 _unop :: I.Elem a b => ((Int,Int) -> (Int,Int)) -> (Ptr b -> CInt -> CInt -> Ptr b -> CInt -> CInt -> IO CString) -> Matrix a b -> Matrix a b
 _unop f g m1 = I.performIO $ do
     m0 <- uncurry M.new $ f (dims m1)
@@ -704,6 +739,4 @@ _unop f g m1 = I.performIO $ do
                 vals1 rows1 cols1
     unsafeFreeze m0
 
-{-# INLINE _vals #-}
-_vals :: I.Elem a b => Matrix a b -> VS.Vector b
-_vals (Matrix _ _ vals) = vals
+-}

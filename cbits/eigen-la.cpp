@@ -1,10 +1,8 @@
 #include "eigen-la.h"
 #include <Eigen/Core>
 #include <Eigen/LU>
-//#include <Eigen/LeastSquares>
 #include <Eigen/QR>
-// #include <Eigen/QR>
-#include <Eigen/SVD> // src/SVD/JacobiSVD.h>
+#include <Eigen/SVD>
 
 using namespace Eigen;
 

@@ -1,58 +1,70 @@
-{-# LANGUAGE RecordWildCards, ScopedTypeVariables #-}
-module Data.Eigen.Matrix.Mutable (
-    MMatrix(..),
-    MMatrixXf,
-    MMatrixXd,
-    MMatrixXcf,
-    MMatrixXcd,
-    IOMatrix,
-    STMatrix,
-    -- * Construction
-    new,
-    replicate,
-    -- * Consistency check
-    valid,
-    -- * Accessing individual elements
-    read,
-    write,
-    unsafeRead,
-    unsafeWrite,
-    -- * Modifying matrices
-    set,
-    copy,
-    unsafeCopy,
-    -- * Raw pointers
-    unsafeWith
-) where
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeInType          #-}
+{-# LANGUAGE TypeOperators       #-}
 
-import Prelude hiding (read, replicate)
+module Data.Eigen.Matrix.Mutable
+  ( MMatrix(..)
+  , MMatrixXf
+  , MMatrixXd
+  , MMatrixXcf
+  , MMatrixXcd
+  , IOMatrix
+  , STMatrix
+    -- * Construction
+    --new,
+    --replicate,
+    -- * Consistency check
+    --valid,
+    -- * Accessing individual elements
+    --read,
+    --write,
+    --unsafeRead,
+    --unsafeWrite,
+    -- * Modifying matrices
+    --set,
+    --copy,
+    --unsafeCopy,
+    -- * Raw pointers
+    --unsafeWith
+  ) where
+
 import Control.Monad.Primitive
-import Foreign.Ptr
-import Foreign.C.Types
 import Data.Complex
+import Data.Eigen.Internal
+import Data.Kind (Type)
+import Foreign.C.Types
+import Foreign.Ptr
+import GHC.TypeLits
+import Prelude hiding (read, replicate)
 import Text.Printf
 import qualified Data.Vector.Storable.Mutable as VSM
-import qualified Data.Eigen.Internal as I
 
--- | Mutable matrix. You can modify elements
-data MMatrix a b s = MMatrix {
-    mm_rows :: Int,
-    mm_cols :: Int,
-    mm_vals :: VSM.MVector s b
-}
+data MMatrix :: Nat -> Nat -> Type -> Type -> Type where
+  MMatrix :: Elem a => Vec (n * m) s a -> MMatrix n m a s
+
+data Vec :: Nat -> Type -> Type -> Type where
+  Vec :: Elem a => VSM.MVector s (C a) -> Vec n s a
 
 -- | Alias for single precision mutable matrix
-type MMatrixXf = MMatrix Float CFloat
+type MMatrixXf  n m s = MMatrix n m Float s
 -- | Alias for double precision mutable matrix
-type MMatrixXd = MMatrix Double CDouble
--- | Alias for single previsiom mutable matrix of complex numbers
-type MMatrixXcf = MMatrix (Complex Float) (I.CComplex CFloat)
--- | Alias for double prevision mutable matrix of complex numbers
-type MMatrixXcd = MMatrix (Complex Double) (I.CComplex CDouble)
+type MMatrixXd  n m s = MMatrix n m Double s
+-- | Alias for single precision mutable matrix of complex numbers
+type MMatrixXcf n m s = MMatrix n m (Complex Float) s
+-- | Alias for double precision mutable matrix of complex numbers
+type MMatrixXcd n m s = MMatrix n m (Complex Double) s
 
-type IOMatrix a b = MMatrix a b RealWorld
-type STMatrix a b s = MMatrix a b s
+type IOMatrix n m a   = MMatrix n m a RealWorld
+type STMatrix n m a s = MMatrix n m a s
 
+--new :: (PrimMonad prim, Elem a) => prim (MMatrix n m (PrimState m) a)
+--new = 
+
+{-
 -- | Verify matrix dimensions and memory layout
 valid :: I.Elem a b => MMatrix a b s -> Bool
 valid MMatrix{..} = mm_rows >= 0 && mm_cols >= 0 && VSM.length mm_vals == mm_rows * mm_cols
@@ -113,4 +125,4 @@ unsafeWith :: I.Elem a b => IOMatrix a b -> (Ptr b -> CInt -> CInt -> IO c) -> I
 unsafeWith mm@MMatrix{..} f
     | not (valid mm) = fail "mutable matrix layout is invalid"
     | otherwise = VSM.unsafeWith mm_vals $ \p -> f p (I.cast mm_rows) (I.cast mm_cols)
-
+-}

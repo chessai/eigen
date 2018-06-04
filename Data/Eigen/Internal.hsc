@@ -19,7 +19,8 @@
 --------------------------------------------------------------------------------
 
 -- | FIXME: Doc
-module Data.Eigen.Internal where --   FIXME: Explicit export list
+module Data.Eigen.Internal
+  where --   FIXME: Explicit export list
 
 --------------------------------------------------------------------------------
 
@@ -52,26 +53,37 @@ class Cast (a :: Type) where
 instance Cast Int where
   type C Int = CInt
   toC = CInt . fromIntegral
+  {-# INLINE toC #-}
   fromC (CInt x) = fromIntegral x
+  {-# INLINE fromC #-}
 
 instance Cast Float where
   type C Float = CFloat
   toC = CFloat
+  {-# INLINE toC #-}
   fromC (CFloat x) = x
+  {-# INLINE fromC #-}
 
 instance Cast Double where
   type C Double = CDouble
   toC = CDouble
+  {-# INLINE toC #-}
   fromC (CDouble x) = x
+  {-# INLINE fromC #-}
 
 instance Cast a => Cast (Complex a) where
   type C (Complex a) = CComplex (C a)
   toC (a :+ b) = CComplex (toC a) (toC b)
+  {-# INLINE toC #-}
   fromC (CComplex a b) = (fromC a) :+ (fromC b)
+  {-# INLINE fromC #-}
 
+-- | WARNING! 'toC' is lossy for any Int greater than (maxBound :: Int32)!
 instance Cast (Int, Int, a) where
   type C (Int, Int, a) = CTriplet a
+  {-# INLINE toC #-}
   toC (x, y, z) = CTriplet (toC x) (toC y) z
+  {-# INLINE fromC #-}
   fromC (CTriplet x y z) = (fromC x, fromC y, z)
 
 --------------------------------------------------------------------------------
@@ -119,6 +131,8 @@ instance Elem (Complex Double)
 --------------------------------------------------------------------------------
 
 -- | Encode a C Type as a CInt
+--
+--   Hack used in FFI wrapper functions when constructing FFI calls
 class Code a where; code :: a -> CInt
 instance Code CFloat             where; code _ = 0
 instance Code CDouble            where; code _ = 1
@@ -165,6 +179,8 @@ instance Storable a => Binary (VS.Vector a) where
     get = get >>= getByteString >>= \bs -> let
         (fp,fo,fs) = BSI.toForeignPtr bs
         es = sizeOf (VS.head vs)
+        -- `plusForeignPtr` is used qualified here to just remind a reader
+        -- that it is defined internally within eigen
         vs = VS.unsafeFromForeignPtr0 (Data.Eigen.Internal.plusForeignPtr fp fo) (fs `div` es)
         in return vs
 
@@ -180,9 +196,9 @@ data CSolver a
 -- | FIXME: Doc
 type CSolverPtr a = Ptr (CSolver a)
 
-{-# INLINE unholyPerformIO #-}
-unholyPerformIO :: IO a -> a
-unholyPerformIO (IO m) = case m realWorld# of (# _, r #) -> r
+-- {-# INLINE unholyPerformIO #-}
+-- unholyPerformIO :: IO a -> a
+-- unholyPerformIO (IO m) = case m realWorld# of (# _, r #) -> r
 
 -- | FIXME: replace with unholyPerformIO
 performIO :: IO a -> a
