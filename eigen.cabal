@@ -401,7 +401,10 @@ library
                         primitive >= 0.1 && < 0.7,
                         binary,
                         bytestring,
-                        refined, 
+                        prettyprinter,
+                        refined,
+                        reflection,
+                        singletons,
                         transformers >= 0.3
 
     include-dirs:       eigen3, cbits

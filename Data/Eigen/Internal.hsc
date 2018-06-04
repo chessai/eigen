@@ -10,21 +10,18 @@
 
 module Data.Eigen.Internal where
 
-import Foreign.Ptr
-import Foreign.ForeignPtr
-import Foreign.Storable
-import Foreign.C.Types
-import Foreign.C.String
 import Control.Monad
-#if !(__GLASGOW_HASKELL__ >= 710)
-import Control.Applicative
-#endif
-import System.IO.Unsafe
-import Data.Complex
-import Data.Bits
 import Data.Binary
 import Data.Binary.Get
 import Data.Binary.Put
+import Data.Bits
+import Data.Complex
+import Foreign.C.String
+import Foreign.C.Types
+import Foreign.ForeignPtr
+import Foreign.Ptr
+import Foreign.Storable
+import System.IO.Unsafe
 import qualified Data.Vector.Storable as VS
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Internal as BSI

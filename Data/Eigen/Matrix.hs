@@ -1,10 +1,22 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE EmptyCase #-}
 
 module Data.Eigen.Matrix
   ( -- * Matrix type
@@ -103,34 +115,38 @@ module Data.Eigen.Matrix
   , unsafeWith 
 ) where
 
-import qualified Prelude as P
-import qualified Data.List as L
-import Prelude hiding (null, sum, all, any, map, filter)
-import Data.Tuple
-import Data.Complex hiding (conjugate)
-import Data.Binary hiding (encode, decode)
-import qualified Data.Binary as B
-import Foreign.Ptr
-import Foreign.C.Types
-import Foreign.C.String
-import Foreign.Storable
-import Foreign.Marshal.Alloc
-import Text.Printf
 import Control.Monad
-import Control.Monad.ST
 import Control.Monad.Primitive
-#if __GLASGOW_HASKELL__ >= 710
-#else
-import Control.Applicative hiding (empty)
-#endif
-import qualified Data.Vector.Storable as VS
-import qualified Data.Vector.Storable.Mutable as VSM
+import Control.Monad.ST
+import Data.Binary hiding (encode, decode)
+import Data.Complex hiding (conjugate)
+import Data.Proxy (Proxy(Proxy))
+import Data.Singletons
+import Data.Singletons.TypeLits hiding (natVal)
+import Data.Tuple
+import Data.Typeable
+import Foreign.C.String
+import Foreign.C.Types
+import Foreign.Marshal.Alloc
+import Foreign.Ptr
+import Foreign.Storable
+import GHC.Natural
+import GHC.TypeLits 
+import Prelude hiding (null, sum, all, any, map, filter)
+import Refined
+import Text.Printf
+import Unsafe.Coerce
+import qualified Data.Binary as B
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Eigen.Internal as I
 import qualified Data.Eigen.Matrix.Mutable as M
-import qualified Data.ByteString.Lazy as BSL
+import qualified Data.List as L
+import qualified Data.Text.Prettyprint.Doc as PP
+import qualified Data.Vector.Storable as VS
+import qualified Data.Vector.Storable.Mutable as VSM
+import qualified Prelude as P
 
 -- | Matrix to be used in pure computations, uses column major memory layout, features copy-free FFI with C++ <http://eigen.tuxfamily.org Eigen> library.
-
 data Matrix a b where
     Matrix :: I.Elem a b => !Int -> !Int -> !(VS.Vector b) -> Matrix a b
 
@@ -148,7 +164,6 @@ instance (I.Elem a b, Show a) => Show (Matrix a b) where
     show m@(Matrix rows cols _) = concat [
         "Matrix ", show rows, "x", show cols,
         "\n", L.intercalate "\n" $ P.map (L.intercalate "\t" . P.map show) $ toList m, "\n"]
-
 
 -- | Basic matrix math exposed through Num instance: @(*)@, @(+)@, @(-)@, `fromInteger`, `signum`, `abs`, `negate`
 instance I.Elem a b => Num (Matrix a b) where
@@ -194,6 +209,15 @@ null (Matrix rows cols _) = rows == 0 && cols == 0
 {-# INLINE square #-}
 square :: I.Elem a b => Matrix a b -> Bool
 square (Matrix rows cols _) = rows == cols
+
+-- | FIXME: Doc
+data Square
+
+instance (I.Elem a b) => Predicate Square (Matrix a b) where
+  validate p x = do
+    unless (square x) $ do
+      throwRefineOtherException (typeOf p)
+        $ "Matrix is not square."
 
 -- | Matrix where all coeffs are filled with given value
 {-# INLINE constant #-}
@@ -241,8 +265,47 @@ dims (Matrix rows cols _) = (rows, cols)
 
 -- | Matrix coefficient at specific row and col
 {-# INLINE (!) #-}
-(!) :: I.Elem a b => Matrix a b -> (Int, Int) -> a
-(!) m (row,col) = coeff row col m
+(!) :: forall a b. (I.Elem a b) => Matrix a b -> (Int, Int) -> a
+(!) m (row,col) = coeff' m'
+  where
+    m' :: Refined (Index 0 0 && Valid) (Matrix a b) = fromRight $ refine m
+
+(!!!) :: forall a b r c. (I.Elem a b, KnownNat r, KnownNat c)
+      => Refined (Index r c && Valid) (Matrix a b)
+      -> a
+(!!!) m = coeff' m
+
+-- | FIXME: Doc
+data Index (r :: Nat) (c :: Nat)
+
+--indexToTuple :: forall r c. (KnownNat r, KnownNat c)
+--             => Index r c
+--             -> (Int, Int)
+--indexToTuple _ = (row, col)
+--  where
+--    row = fromIntegral (natVal (Proxy @r))
+--    col = fromIntegral (natVal (Proxy @c))
+
+instance (I.Elem a b, KnownNat r, KnownNat c) => Predicate (Index r c) (Matrix a b) where
+  validate p (Matrix rows cols _) = do
+    let row = fromIntegral (natVal (Proxy @r))
+        col = fromIntegral (natVal (Proxy @c))
+        rowsOut = row >= rows
+        colsOut = col >= cols
+    unless (rowsOut || colsOut) $ do
+      throwRefineOtherException (typeOf p)
+        $ "Out of bounds. Attempted to index at: "
+        <> PP.pretty (row, col)
+        <> ",\n but Matrix has dimensions: "
+        <> PP.pretty rows <> " x " <> PP.pretty cols <> "."
+
+coeff' :: forall a b r c. (I.Elem a b, KnownNat r, KnownNat c)
+       => Refined (Index r c && Valid) (Matrix a b)
+       -> a
+coeff' m = unsafeCoeff row col (unrefine m)
+  where
+    row = fromIntegral (natVal (Proxy @r))
+    col = fromIntegral (natVal (Proxy @c))
 
 -- | Matrix coefficient at specific row and col
 {-# INLINE coeff #-}
@@ -274,10 +337,25 @@ block startRow startCol blockRows blockCols m =
     generate blockRows blockCols $ \row col ->
         coeff (startRow + row) (startCol + col) m
 
+-- | FIXME: Doc
+data Valid
+
+instance (I.Elem a b) => Predicate Valid (Matrix a b) where
+  validate p (Matrix rows cols vals) = do
+    let rowsGood = rows >= 0
+        colsGood = cols >= 0
+        valsGood = VS.length vals == rows * cols
+    unless (rowsGood && colsGood && valsGood) $ do
+      throwRefineOtherException (typeOf p)
+        $ "Matrix is not valid."
+    
 -- | Verify matrix dimensions and memory layout
 {-# INLINE valid #-}
 valid :: I.Elem a b => Matrix a b -> Bool
-valid (Matrix rows cols vals) = rows >= 0 && cols >= 0 && VS.length vals == rows * cols
+valid (Matrix rows cols vals) =
+     rows >= 0
+  && cols >= 0
+  && VS.length vals == rows * cols
 
 -- | The maximum coefficient of the matrix
 {-# INLINE maxCoeff #-}
@@ -404,10 +482,10 @@ hypotNorm :: I.Elem a b => Matrix a b -> a
 hypotNorm = _prop I.hypotNorm
 
 -- | The determinant of the matrix
-determinant :: I.Elem a b => Matrix a b -> a
-determinant m
-    | square m = _prop I.determinant m
-    | otherwise = error "Matrix.determinant: non-square matrix"
+determinant :: I.Elem a b => Refined Square (Matrix a b) -> a
+determinant m = _prop I.determinant (unrefine m)
+    -- | square m = _prop I.determinant m
+    -- | otherwise = error "Matrix.determinant: non-square matrix"
 
 -- | Adding two matrices by adding the corresponding entries together. You can use @(+)@ function as well.
 add :: I.Elem a b => Matrix a b -> Matrix a b -> Matrix a b
@@ -541,10 +619,10 @@ diagonal = _unop (\(rows, cols) -> (min rows cols, 1)) I.diagonal
 
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
 -}
-inverse :: I.Elem a b => Matrix a b -> Matrix a b
-inverse m
-    | square m = _unop id I.inverse m
-    | otherwise = error "Matrix.inverse: non-square matrix"
+inverse :: I.Elem a b => Refined Square (Matrix a b) -> Matrix a b
+inverse m = _unop id I.inverse (unrefine m)
+--    | square m = _unop id I.inverse m
+--    | otherwise = error "Matrix.inverse: non-square matrix"
 
 -- | Adjoint of the matrix
 adjoint :: I.Elem a b => Matrix a b -> Matrix a b
