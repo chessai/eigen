@@ -8,7 +8,9 @@ with pkgs.haskell.lib;
 
 {
   refined = doJailbreak (self.callPackage ./refined.nix {});
-  
+
+  # primitive = dontCheck (self.callPackage ./primitive.nix {});
+
   singletons = dontCheck super.singletons;
 
   eigen = (

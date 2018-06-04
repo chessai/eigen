@@ -1,61 +1,84 @@
-name:           eigen
-version:        3.3.4
-homepage:       https://github.com/osidorkin/haskell-eigen
-synopsis:       Eigen C++ library (linear algebra: matrices, sparse matrices, vectors, numerical solvers).
-description:    This module provides Haskell binding for <http://eigen.tuxfamily.org/ Eigen C++ library>.
-                .
-                Eigen is versatile.
-                .
-                * It supports all matrix sizes, from small fixed-size matrices to arbitrarily large dense matrices, and even sparse matrices.
-                .
-                * It supports all standard numeric types, including std::complex, integers, and is easily extensible to custom numeric types.
-                .
-                * It supports various <http://eigen.tuxfamily.org/dox/group__TopicLinearAlgebraDecompositions.html matrix decompositions> and <http://eigen.tuxfamily.org/dox/group__TutorialGeometry.html geometry features>.
-                .
-                * Its ecosystem of <http://eigen.tuxfamily.org/dox/unsupported/index.html unsupported modules> provides many specialized features such as non-linear optimization, matrix functions, a polynomial solver, FFT, and much more.
-                .
-                Eigen is fast.
-                .
-                * Expression templates allow to intelligently remove temporaries and enable <http://eigen.tuxfamily.org/dox/TopicLazyEvaluation.html lazy evaluation>, when that is appropriate.
-                .
-                * <http://eigen.tuxfamily.org/index.php?title=FAQ#Vectorization Explicit vectorization> is performed for SSE 2\/3\/4, ARM NEON, and AltiVec instruction sets, with graceful fallback to non-vectorized code.
-                .
-                * Fixed-size matrices are fully optimized: dynamic memory allocation is avoided, and the loops are unrolled when that makes sense.
-                .
-                * For large matrices, special attention is paid to cache-friendliness.
-                .
-                Eigen is reliable.
-                .
-                * Algorithms are carefully selected for reliability. Reliability trade-offs are <http://eigen.tuxfamily.org/dox/group__TopicLinearAlgebraDecompositions.html clearly documented> and <http://eigen.tuxfamily.org/dox/classEigen_1_1JacobiSVD.html extremely> <http://eigen.tuxfamily.org/dox/classEigen_1_1FullPivHouseholderQR.html safe> <http://eigen.tuxfamily.org/dox/classEigen_1_1FullPivLU.html decompositions> are available.
-                .
-                * Eigen is thoroughly tested through its own <http://eigen.tuxfamily.org/index.php?title=Tests test suite> (over 500 executables), the standard BLAS test suite, and parts of the LAPACK test suite.
-                .
-                Eigen is elegant.
-                .
-                * The API is extremely <http://eigen.tuxfamily.org/index.php?title=API_Showcase clean and expressive> while feeling natural to C++ programmers, thanks to expression templates.
-                .
-                * Implementing an algorithm on top of Eigen feels like just copying pseudocode.
-                .
-                Eigen has good compiler support as we run our test suite against many compilers to guarantee reliability and work around any compiler bugs.
-                Eigen also is standard C++98 and maintains very reasonable compilation times.
-                .
-                Eigen is licensed under the MPL2, which is a simple weak copyleft license. Common questions about the MPL2 are answered in the official MPL2 FAQ at <http://www.mozilla.org/MPL/2.0/FAQ.html>.
-                .
-                Note that currently, a few features in Eigen rely on third-party code licensed under the LGPL: SimplicialCholesky, AMD ordering, and constrained_cg. Such features are explicitly disabled by compiling Eigen with the EIGEN_MPL2_ONLY preprocessor symbol defined.
-                .
-                Virtually any software may use Eigen. For example, closed-source software may use Eigen without having to disclose its own source code. Many proprietary and closed-source software projects are using Eigen right now, as well as many BSD-licensed projects.
-                .
-                Documentation at the most extent replicates original <http://eigen.tuxfamily.org/dox/ Eigen documentation>.
-category:       Data, Math, Algebra, Statistics, Algorithms, Numeric
-license:        BSD3
-license-file:   LICENSE
-copyright:      (c) 2013-2015, Oleg Sidorkin
-author:         Oleg Sidorkin <oleg.sidorkin@gmail.com>
-maintainer:     Oleg Sidorkin <oleg.sidorkin@gmail.com>
-cabal-version:  >= 1.8
-build-type:     Simple
-tested-with:    GHC ==7.8.3
-extra-source-files: cbits/eigen-runtime.h
+name:
+  eigen
+version:
+  3.3.4
+homepage:
+  https://github.com/chessai/eigen
+synopsis:
+  Eigen C++ library (linear algebra: matrices, sparse matrices, vectors, numerical solvers).
+description:
+  This module provides Haskell binding for <http://eigen.tuxfamily.org/ Eigen C++ library>.
+  .
+  Eigen is versatile.
+  .
+  * It supports all matrix sizes, from small fixed-size matrices to arbitrarily large dense matrices, and even sparse matrices.
+  .
+  * It supports all standard numeric types, including std::complex, integers, and is easily extensible to custom numeric types.
+  .
+  * It supports various <http://eigen.tuxfamily.org/dox/group__TopicLinearAlgebraDecompositions.html matrix decompositions> and <http://eigen.tuxfamily.org/dox/group__TutorialGeometry.html geometry features>.
+  .
+  * Its ecosystem of <http://eigen.tuxfamily.org/dox/unsupported/index.html unsupported modules> provides many specialized features such as non-linear optimization, matrix functions, a polynomial solver, FFT, and much more.
+  .
+  Eigen is fast.
+  .
+  * Expression templates allow to intelligently remove temporaries and enable <http://eigen.tuxfamily.org/dox/TopicLazyEvaluation.html lazy evaluation>, when that is appropriate.
+  .
+  * <http://eigen.tuxfamily.org/index.php?title=FAQ#Vectorization Explicit vectorization> is performed for SSE 2\/3\/4, ARM NEON, and AltiVec instruction sets, with graceful fallback to non-vectorized code.
+  .
+  * Fixed-size matrices are fully optimized: dynamic memory allocation is avoided, and the loops are unrolled when that makes sense.
+  .
+  * For large matrices, special attention is paid to cache-friendliness.
+  .
+  Eigen is reliable.
+  .
+  * Algorithms are carefully selected for reliability. Reliability trade-offs are <http://eigen.tuxfamily.org/dox/group__TopicLinearAlgebraDecompositions.html clearly documented> and <http://eigen.tuxfamily.org/dox/classEigen_1_1JacobiSVD.html extremely> <http://eigen.tuxfamily.org/dox/classEigen_1_1FullPivHouseholderQR.html safe> <http://eigen.tuxfamily.org/dox/classEigen_1_1FullPivLU.html decompositions> are available.
+  .
+  * Eigen is thoroughly tested through its own <http://eigen.tuxfamily.org/index.php?title=Tests test suite> (over 500 executables), the standard BLAS test suite, and parts of the LAPACK test suite.
+  .
+  Eigen is elegant.
+  .
+  * The API is extremely <http://eigen.tuxfamily.org/index.php?title=API_Showcase clean and expressive> while feeling natural to C++ programmers, thanks to expression templates.
+  .
+  * Implementing an algorithm on top of Eigen feels like just copying pseudocode.
+  .
+  Eigen has good compiler support as we run our test suite against many compilers to guarantee reliability and work around any compiler bugs.
+  Eigen also is standard C++98 and maintains very reasonable compilation times.
+  .
+  Eigen is licensed under the MPL2, which is a simple weak copyleft license. Common questions about the MPL2 are answered in the official MPL2 FAQ at <http://www.mozilla.org/MPL/2.0/FAQ.html>.
+  .
+  Note that currently, a few features in Eigen rely on third-party code licensed under the LGPL: SimplicialCholesky, AMD ordering, and constrained_cg. Such features are explicitly disabled by compiling Eigen with the EIGEN_MPL2_ONLY preprocessor symbol defined.
+  .
+  Virtually any software may use Eigen. For example, closed-source software may use Eigen without having to disclose its own source code. Many proprietary and closed-source software projects are using Eigen right now, as well as many BSD-licensed projects.
+  .
+  Documentation at the most extent replicates original <http://eigen.tuxfamily.org/dox/ Eigen documentation>.
+category:
+    Algebra
+  , Algorithms
+  , Data
+  , Math
+  , Numeric
+  , Statistics
+license:
+  BSD3
+license-file:
+  LICENSE
+copyright:
+  (c) 2013-2015, Oleg Sidorkin
+  (c) 2018, chessai
+author:
+  Oleg Sidorkin <oleg.sidorkin@gmail.com>
+  chessai <chessai1996@gmail.com>
+maintainer:
+  chessai <chessai1996@gmail.com>
+cabal-version:
+  >= 1.10
+build-type:
+  Simple
+tested-with:
+    GHC == 8.2.2
+  , GHC == 8.4.3
+extra-source-files:
+    cbits/eigen-runtime.h
     cbits/eigen-dense.h
     cbits/eigen-la.h
     cbits/eigen-sparse.h
@@ -378,42 +401,348 @@ extra-source-files: cbits/eigen-runtime.h
 	eigen3/Eigen/Sparse
 	eigen3/Eigen/inverse.txt
 	eigen3/COPYING.GPL
+	eigen3/unsupported/README.txt
+	eigen3/unsupported/bench/bench_svd.cpp
+	eigen3/unsupported/test/cxx11_tensor_sycl.cpp
+	eigen3/unsupported/test/BVH.cpp
+	eigen3/unsupported/test/FFT.cpp
+	eigen3/unsupported/test/cxx11_tensor_broadcast_sycl.cpp
+	eigen3/unsupported/test/cxx11_non_blocking_thread_pool.cpp
+	eigen3/unsupported/test/polynomialsolver.cpp
+	eigen3/unsupported/test/cxx11_tensor_complex_cwise_ops_cuda.cu
+	eigen3/unsupported/test/matrix_exponential.cpp
+	eigen3/unsupported/test/cxx11_tensor_expr.cpp
+	eigen3/unsupported/test/cxx11_tensor_comparisons.cpp
+	eigen3/unsupported/test/cxx11_tensor_scan.cpp
+	eigen3/unsupported/test/cxx11_tensor_concatenation.cpp
+	eigen3/unsupported/test/cxx11_tensor_fixed_size.cpp
+	eigen3/unsupported/test/cxx11_tensor_reverse.cpp
+	eigen3/unsupported/test/cxx11_tensor_chipping.cpp
+	eigen3/unsupported/test/cxx11_tensor_of_float16_cuda.cu
+	eigen3/unsupported/test/cxx11_tensor_uint128.cpp
+	eigen3/unsupported/test/cxx11_tensor_simple.cpp
+	eigen3/unsupported/test/polynomialutils.cpp
+	eigen3/unsupported/test/matrix_function.cpp
+	eigen3/unsupported/test/cxx11_tensor_reduction_cuda.cu
+	eigen3/unsupported/test/cxx11_tensor_fft.cpp
+	eigen3/unsupported/test/cxx11_tensor_sugar.cpp
+	eigen3/unsupported/test/cxx11_tensor_morphing.cpp
+	eigen3/unsupported/test/autodiff_scalar.cpp
+	eigen3/unsupported/test/alignedvector3.cpp
+	eigen3/unsupported/test/cxx11_tensor_dimension.cpp
+	eigen3/unsupported/test/cxx11_tensor_notification.cpp
+	eigen3/unsupported/test/cxx11_eventcount.cpp
+	eigen3/unsupported/test/cxx11_tensor_random.cpp
+	eigen3/unsupported/test/gmres.cpp
+	eigen3/unsupported/test/cxx11_tensor_inflation.cpp
+	eigen3/unsupported/test/cxx11_tensor_of_strings.cpp
+	eigen3/unsupported/test/cxx11_meta.cpp
+	eigen3/unsupported/test/cxx11_tensor_assign.cpp
+	eigen3/unsupported/test/cxx11_tensor_map.cpp
+	eigen3/unsupported/test/mpreal_support.cpp
+	eigen3/unsupported/test/cxx11_tensor_forced_eval.cpp
+	eigen3/unsupported/test/FFTW.cpp
+	eigen3/unsupported/test/mpreal/mpreal.h
+	eigen3/unsupported/test/cxx11_tensor_scan_cuda.cu
+	eigen3/unsupported/test/cxx11_tensor_argmax.cpp
+	eigen3/unsupported/test/cxx11_tensor_of_complex.cpp
+	eigen3/unsupported/test/cxx11_tensor_intdiv.cpp
+	eigen3/unsupported/test/cxx11_tensor_random_cuda.cu
+	eigen3/unsupported/test/NumericalDiff.cpp
+	eigen3/unsupported/test/cxx11_tensor_padding.cpp
+	eigen3/unsupported/test/special_functions.cpp
+	eigen3/unsupported/test/cxx11_tensor_complex_cuda.cu
+	eigen3/unsupported/test/matrix_power.cpp
+	eigen3/unsupported/test/matrix_functions.h
+	eigen3/unsupported/test/NonLinearOptimization.cpp
+	eigen3/unsupported/test/cxx11_tensor_generator.cpp
+	eigen3/unsupported/test/cxx11_tensor_broadcasting.cpp
+	eigen3/unsupported/test/cxx11_tensor_striding.cpp
+	eigen3/unsupported/test/cxx11_tensor_io.cpp
+	eigen3/unsupported/test/cxx11_tensor_mixed_indices.cpp
+	eigen3/unsupported/test/autodiff.cpp
+	eigen3/unsupported/test/cxx11_tensor_layout_swap.cpp
+	eigen3/unsupported/test/cxx11_tensor_forced_eval_sycl.cpp
+	eigen3/unsupported/test/cxx11_tensor_contract_cuda.cu
+	eigen3/unsupported/test/cxx11_tensor_device_sycl.cpp
+	eigen3/unsupported/test/cxx11_tensor_ref.cpp
+	eigen3/unsupported/test/minres.cpp
+	eigen3/unsupported/test/splines.cpp
+	eigen3/unsupported/test/cxx11_tensor_image_patch.cpp
+	eigen3/unsupported/test/cxx11_tensor_patch.cpp
+	eigen3/unsupported/test/cxx11_tensor_math.cpp
+	eigen3/unsupported/test/cxx11_tensor_argmax_cuda.cu
+	eigen3/unsupported/test/cxx11_tensor_convolution.cpp
+	eigen3/unsupported/test/cxx11_tensor_roundings.cpp
+	eigen3/unsupported/test/cxx11_tensor_thread_pool.cpp
+	eigen3/unsupported/test/EulerAngles.cpp
+	eigen3/unsupported/test/cxx11_tensor_reduction_sycl.cpp
+	eigen3/unsupported/test/cxx11_tensor_cuda.cu
+	eigen3/unsupported/test/kronecker_product.cpp
+	eigen3/unsupported/test/cxx11_tensor_ifft.cpp
+	eigen3/unsupported/test/cxx11_tensor_cast_float16_cuda.cu
+	eigen3/unsupported/test/cxx11_tensor_lvalue.cpp
+	eigen3/unsupported/test/cxx11_runqueue.cpp
+	eigen3/unsupported/test/cxx11_tensor_volume_patch.cpp
+	eigen3/unsupported/test/cxx11_tensor_empty.cpp
+	eigen3/unsupported/test/CMakeLists.txt
+	eigen3/unsupported/test/openglsupport.cpp
+	eigen3/unsupported/test/cxx11_tensor_casts.cpp
+	eigen3/unsupported/test/forward_adolc.cpp
+	eigen3/unsupported/test/dgmres.cpp
+	eigen3/unsupported/test/cxx11_tensor_symmetry.cpp
+	eigen3/unsupported/test/cxx11_tensor_custom_index.cpp
+	eigen3/unsupported/test/cxx11_tensor_index_list.cpp
+	eigen3/unsupported/test/cxx11_tensor_of_const_values.cpp
+	eigen3/unsupported/test/cxx11_tensor_custom_op.cpp
+	eigen3/unsupported/test/matrix_square_root.cpp
+	eigen3/unsupported/test/sparse_extra.cpp
+	eigen3/unsupported/test/cxx11_tensor_shuffling.cpp
+	eigen3/unsupported/test/cxx11_tensor_reduction.cpp
+	eigen3/unsupported/test/cxx11_tensor_device.cu
+	eigen3/unsupported/test/cxx11_tensor_const.cpp
+	eigen3/unsupported/test/cxx11_tensor_contraction.cpp
+	eigen3/unsupported/test/levenberg_marquardt.cpp
+	eigen3/unsupported/Eigen/AdolcForward
+	eigen3/unsupported/Eigen/IterativeSolvers
+	eigen3/unsupported/Eigen/KroneckerProduct
+	eigen3/unsupported/Eigen/FFT
+	eigen3/unsupported/Eigen/AlignedVector3
+	eigen3/unsupported/Eigen/LevenbergMarquardt
+	eigen3/unsupported/Eigen/MPRealSupport
+	eigen3/unsupported/Eigen/SpecialFunctions
+	eigen3/unsupported/Eigen/BVH
+	eigen3/unsupported/Eigen/Polynomials
+	eigen3/unsupported/Eigen/SparseExtra
+	eigen3/unsupported/Eigen/ArpackSupport
+	eigen3/unsupported/Eigen/NumericalDiff
+	eigen3/unsupported/Eigen/Splines
+	eigen3/unsupported/Eigen/CXX11/Tensor
+	eigen3/unsupported/Eigen/CXX11/ThreadPool
+	eigen3/unsupported/Eigen/CXX11/TensorSymmetry
+	eigen3/unsupported/Eigen/CXX11/src/util/EmulateCXX11Meta.h
+	eigen3/unsupported/Eigen/CXX11/src/util/CXX11Workarounds.h
+	eigen3/unsupported/Eigen/CXX11/src/util/MaxSizeVector.h
+	eigen3/unsupported/Eigen/CXX11/src/util/EmulateArray.h
+	eigen3/unsupported/Eigen/CXX11/src/util/CXX11Meta.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorEvalTo.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorMorphing.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorMeta.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorPatch.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/README.md
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorReductionCuda.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorInflation.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorIO.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorFixedSize.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDevice.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorConvolution.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorUInt128.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorContractionThreadPool.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorIntDiv.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorGlobalFunctions.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorTraits.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorReduction.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorStorage.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorForcedEval.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorForwardDeclarations.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorScan.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorContraction.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorReverse.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorReductionSycl.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorChipping.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDimensions.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclExprConstructor.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorPadding.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorConcatenation.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorMacros.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorConversion.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorBroadcasting.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorContractionBlocking.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceDefault.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceThreadPool.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclExtractFunctors.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/Tensor.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorArgMax.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorMap.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorExpr.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclPlaceHolderExpr.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorLayoutSwap.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorExecutor.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorVolumePatch.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorIndexList.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorFunctors.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorEvaluator.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclConvertToDeviceExpression.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSycl.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceCuda.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclExtractAccessor.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorCostModel.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclLeafCount.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorShuffling.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorAssign.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorContractionCuda.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorRef.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclRun.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorBase.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorContractionMapper.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorInitializer.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorStriding.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorGenerator.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDimensionList.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorImagePatch.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorFFT.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorRandom.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceSycl.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorSyclTuple.h
+	eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorCustomOp.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/ThreadYield.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/RunQueue.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/NonBlockingThreadPool.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/EventCount.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/ThreadPoolInterface.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/SimpleThreadPool.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/ThreadEnvironment.h
+	eigen3/unsupported/Eigen/CXX11/src/ThreadPool/ThreadLocal.h
+	eigen3/unsupported/Eigen/CXX11/src/TensorSymmetry/util/TemplateGroupTheory.h
+	eigen3/unsupported/Eigen/CXX11/src/TensorSymmetry/DynamicSymmetry.h
+	eigen3/unsupported/Eigen/CXX11/src/TensorSymmetry/StaticSymmetry.h
+	eigen3/unsupported/Eigen/CXX11/src/TensorSymmetry/Symmetry.h
+	eigen3/unsupported/Eigen/CXX11/CMakeLists.txt
+	eigen3/unsupported/Eigen/MatrixFunctions
+	eigen3/unsupported/Eigen/src/IterativeSolvers/ConstrainedConjGrad.h
+	eigen3/unsupported/Eigen/src/IterativeSolvers/IncompleteLU.h
+	eigen3/unsupported/Eigen/src/IterativeSolvers/DGMRES.h
+	eigen3/unsupported/Eigen/src/IterativeSolvers/MINRES.h
+	eigen3/unsupported/Eigen/src/IterativeSolvers/Scaling.h
+	eigen3/unsupported/Eigen/src/IterativeSolvers/GMRES.h
+	eigen3/unsupported/Eigen/src/IterativeSolvers/IterationController.h
+	eigen3/unsupported/Eigen/src/KroneckerProduct/KroneckerTensorProduct.h
+	eigen3/unsupported/Eigen/src/FFT/ei_fftw_impl.h
+	eigen3/unsupported/Eigen/src/FFT/ei_kissfft_impl.h
+	eigen3/unsupported/Eigen/src/LevenbergMarquardt/LMcovar.h
+	eigen3/unsupported/Eigen/src/LevenbergMarquardt/LMpar.h
+	eigen3/unsupported/Eigen/src/LevenbergMarquardt/LevenbergMarquardt.h
+	eigen3/unsupported/Eigen/src/LevenbergMarquardt/CopyrightMINPACK.txt
+	eigen3/unsupported/Eigen/src/LevenbergMarquardt/LMonestep.h
+	eigen3/unsupported/Eigen/src/LevenbergMarquardt/LMqrsolv.h
+	eigen3/unsupported/Eigen/src/SpecialFunctions/SpecialFunctionsImpl.h
+	eigen3/unsupported/Eigen/src/SpecialFunctions/SpecialFunctionsArrayAPI.h
+	eigen3/unsupported/Eigen/src/SpecialFunctions/arch/CUDA/CudaSpecialFunctions.h
+	eigen3/unsupported/Eigen/src/SpecialFunctions/SpecialFunctionsHalf.h
+	eigen3/unsupported/Eigen/src/SpecialFunctions/SpecialFunctionsFunctors.h
+	eigen3/unsupported/Eigen/src/SpecialFunctions/SpecialFunctionsPacketMath.h
+	eigen3/unsupported/Eigen/src/BVH/KdBVH.h
+	eigen3/unsupported/Eigen/src/BVH/BVAlgorithms.h
+	eigen3/unsupported/Eigen/src/Polynomials/Companion.h
+	eigen3/unsupported/Eigen/src/Polynomials/PolynomialSolver.h
+	eigen3/unsupported/Eigen/src/Polynomials/PolynomialUtils.h
+	eigen3/unsupported/Eigen/src/SparseExtra/BlockSparseMatrix.h
+	eigen3/unsupported/Eigen/src/SparseExtra/RandomSetter.h
+	eigen3/unsupported/Eigen/src/SparseExtra/MarketIO.h
+	eigen3/unsupported/Eigen/src/SparseExtra/DynamicSparseMatrix.h
+	eigen3/unsupported/Eigen/src/SparseExtra/MatrixMarketIterator.h
+	eigen3/unsupported/Eigen/src/SparseExtra/BlockOfDynamicSparseMatrix.h
+	eigen3/unsupported/Eigen/src/NumericalDiff/NumericalDiff.h
+	eigen3/unsupported/Eigen/src/Splines/Spline.h
+	eigen3/unsupported/Eigen/src/Splines/SplineFwd.h
+	eigen3/unsupported/Eigen/src/Splines/SplineFitting.h
+	eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixSquareRoot.h
+	eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixFunction.h
+	eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h
+	eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixPower.h
+	eigen3/unsupported/Eigen/src/MatrixFunctions/StemFunction.h
+	eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixLogarithm.h
+	eigen3/unsupported/Eigen/src/MoreVectorization/MathFunctions.h
+	eigen3/unsupported/Eigen/src/Eigenvalues/ArpackSelfAdjointEigenSolver.h
+	eigen3/unsupported/Eigen/src/Skyline/SkylineInplaceLU.h
+	eigen3/unsupported/Eigen/src/Skyline/SkylineStorage.h
+	eigen3/unsupported/Eigen/src/Skyline/SkylineUtil.h
+	eigen3/unsupported/Eigen/src/Skyline/SkylineProduct.h
+	eigen3/unsupported/Eigen/src/Skyline/SkylineMatrixBase.h
+	eigen3/unsupported/Eigen/src/Skyline/SkylineMatrix.h
+	eigen3/unsupported/Eigen/src/AutoDiff/AutoDiffVector.h
+	eigen3/unsupported/Eigen/src/AutoDiff/AutoDiffScalar.h
+	eigen3/unsupported/Eigen/src/AutoDiff/AutoDiffJacobian.h
+	eigen3/unsupported/Eigen/src/EulerAngles/EulerSystem.h
+	eigen3/unsupported/Eigen/src/EulerAngles/CMakeLists.txt
+	eigen3/unsupported/Eigen/src/EulerAngles/EulerAngles.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/dogleg.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/chkder.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/r1updt.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/fdjac1.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/covar.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/rwupdt.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/qrsolv.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/LevenbergMarquardt.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/r1mpyq.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/HybridNonLinearSolver.h
+	eigen3/unsupported/Eigen/src/NonLinearOptimization/lmpar.h
+	eigen3/unsupported/Eigen/MoreVectorization
+	eigen3/unsupported/Eigen/CMakeLists.txt
+	eigen3/unsupported/Eigen/Skyline
+	eigen3/unsupported/Eigen/AutoDiff
+	eigen3/unsupported/Eigen/EulerAngles
+	eigen3/unsupported/Eigen/OpenGLSupport
+	eigen3/unsupported/Eigen/NonLinearOptimization
+	eigen3/unsupported/CMakeLists.txt
+	eigen3/unsupported/doc/snippets/CMakeLists.txt
+	eigen3/unsupported/doc/eigendoxy_layout.xml.in
+	eigen3/unsupported/doc/examples/FFT.cpp
+	eigen3/unsupported/doc/examples/BVH_Example.cpp
+	eigen3/unsupported/doc/examples/PolynomialUtils1.cpp
+	eigen3/unsupported/doc/examples/MatrixLogarithm.cpp
+	eigen3/unsupported/doc/examples/MatrixSine.cpp
+	eigen3/unsupported/doc/examples/MatrixFunction.cpp
+	eigen3/unsupported/doc/examples/MatrixPower_optimal.cpp
+	eigen3/unsupported/doc/examples/MatrixSquareRoot.cpp
+	eigen3/unsupported/doc/examples/MatrixExponential.cpp
+	eigen3/unsupported/doc/examples/EulerAngles.cpp
+	eigen3/unsupported/doc/examples/MatrixPower.cpp
+	eigen3/unsupported/doc/examples/PolynomialSolver1.cpp
+	eigen3/unsupported/doc/examples/CMakeLists.txt
+	eigen3/unsupported/doc/examples/MatrixSinh.cpp
+	eigen3/unsupported/doc/CMakeLists.txt
+	eigen3/unsupported/doc/Overview.dox
 
 
 source-repository head
   type:     git
-  location: git://github.com/osidorkin/haskell-eigen.git
-
+  location: git://github.com/chessai/eigen.git
 
 library
-    exposed-modules:    Data.Eigen.LA
-                        Data.Eigen.SparseLA
-                        Data.Eigen.Matrix
-                        Data.Eigen.Matrix.Mutable
-                        Data.Eigen.SparseMatrix
-                        Data.Eigen.SparseMatrix.Mutable
-                        Data.Eigen.Parallel
-                        Data.Eigen.Internal
+  exposed-modules:
+      Data.Eigen.Internal
+      Data.Eigen.LA
+      Data.Eigen.Matrix
+      Data.Eigen.Matrix.Mutable
+      Data.Eigen.Parallel
+      Data.Eigen.SparseLA
+      Data.Eigen.SparseMatrix
+      Data.Eigen.SparseMatrix.Mutable
 
-    ghc-options:        -Wall -fno-warn-name-shadowing
-    build-depends:      base >= 3 && < 5,
-                        vector >= 0.5 && < 0.13,
-                        primitive >= 0.1 && < 0.7,
-                        binary,
-                        bytestring,
-                        prettyprinter,
-                        refined,
-                        reflection,
-                        singletons,
-                        transformers >= 0.3
+  ghc-options:
+    -Wall -fno-warn-name-shadowing
+  build-depends:
+      base >= 4.9 && < 5
+    , vector >= 0.5 && < 0.13
+    , primitive >= 0.6.3 && < 0.7
+    , binary
+    , bytestring
+    , prettyprinter
+    , refined
+    , transformers >= 0.3
 
-    include-dirs:       eigen3, cbits
-    c-sources:          cbits/eigen-runtime.cpp
-                        cbits/eigen-dense.cpp
-                        cbits/eigen-sparse.cpp
-                        cbits/eigen-la.cpp
-                        cbits/eigen-sparse-la.cpp
-    extra-libraries:    stdc++
+  include-dirs:
+      eigen3
+    , cbits
+  c-sources:
+    cbits/eigen-runtime.cpp
+    cbits/eigen-dense.cpp
+    cbits/eigen-sparse.cpp
+    cbits/eigen-la.cpp
+    cbits/eigen-sparse-la.cpp
+  extra-libraries:
+    stdc++
 
 Test-Suite test-solve
     type:               exitcode-stdio-1.0
