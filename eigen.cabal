@@ -1,5 +1,5 @@
 name:           eigen
-version:        3.3.4
+version:        3.3.4.0
 homepage:       https://github.com/osidorkin/haskell-eigen
 synopsis:       Eigen C++ library (linear algebra: matrices, sparse matrices, vectors, numerical solvers).
 description:    This module provides Haskell binding for <http://eigen.tuxfamily.org/ Eigen C++ library>.
@@ -49,12 +49,12 @@ description:    This module provides Haskell binding for <http://eigen.tuxfamily
 category:       Data, Math, Algebra, Statistics, Algorithms, Numeric
 license:        BSD3
 license-file:   LICENSE
-copyright:      (c) 2013-2015, Oleg Sidorkin
+copyright:      (c) 2013-2015, Oleg Sidorkin, (c) 2018, chessai
 author:         Oleg Sidorkin <oleg.sidorkin@gmail.com>
-maintainer:     Oleg Sidorkin <oleg.sidorkin@gmail.com>
-cabal-version:  >= 1.8
+maintainer:     chessai <chessai1996@gmail.com>
+cabal-version:  >= 1.10
 build-type:     Simple
-tested-with:    GHC ==7.8.3
+tested-with:    GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3
 extra-source-files: cbits/eigen-runtime.h
     cbits/eigen-dense.h
     cbits/eigen-la.h
@@ -379,11 +379,9 @@ extra-source-files: cbits/eigen-runtime.h
 	eigen3/Eigen/inverse.txt
 	eigen3/COPYING.GPL
 
-
 source-repository head
   type:     git
-  location: git://github.com/osidorkin/haskell-eigen.git
-
+  location: git://github.com/chessai/eigen.git
 
 library
     exposed-modules:    Data.Eigen.LA
@@ -396,15 +394,11 @@ library
                         Data.Eigen.Internal
 
     ghc-options:        -Wall -fno-warn-name-shadowing
-    build-depends:      base >= 3 && < 5,
+    build-depends:      base >= 4.9 && < 5,
                         vector >= 0.5 && < 0.13,
                         primitive >= 0.1 && < 0.7,
                         binary,
                         bytestring,
-                        prettyprinter,
-                        refined,
-                        reflection,
-                        singletons,
                         transformers >= 0.3
 
     include-dirs:       eigen3, cbits

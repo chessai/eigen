@@ -8,6 +8,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 
+-- | This internal module is going to see a lot of refactoring.
+--   It is not recommended to import this, as the API is likely
+--   to experience heavy change.
 module Data.Eigen.Internal where
 
 import Control.Monad
