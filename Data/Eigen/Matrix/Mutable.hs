@@ -57,11 +57,11 @@ import GHC.Exts (RealWorld)
 import GHC.TypeLits (Nat, type (*), type (<=), KnownNat)
 import qualified Data.Vector.Storable.Mutable as VSM
 
-data MMatrix :: Nat -> Nat -> Type -> Type -> Type where
-  MMatrix :: Elem a => Vec (n * m) s a -> MMatrix n m s a
+newtype MMatrix :: Nat -> Nat -> Type -> Type -> Type where
+  MMatrix :: Vec (n * m) s a -> MMatrix n m s a
 
-data Vec :: Nat -> Type -> Type -> Type where
-  Vec :: Elem a => VSM.MVector s (C a) -> Vec n s a
+newtype Vec :: Nat -> Type -> Type -> Type where
+  Vec :: VSM.MVector s (C a) -> Vec n s a
 
 -- | Alias for single precision mutable matrix
 type MMatrixXf  n m s = MMatrix n m s Float

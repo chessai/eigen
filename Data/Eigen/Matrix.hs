@@ -50,11 +50,11 @@ import Foreign.Storable (peek)
 import qualified Data.Vector.Storable as VS
 import qualified Data.Vector.Storable.Mutable as VSM
 
-data Matrix :: Nat -> Nat -> Type -> Type where
-  Matrix :: Elem a => Vec (n * m) a -> Matrix n m a
+newtype Matrix :: Nat -> Nat -> Type -> Type where
+  Matrix :: Vec (n * m) a -> Matrix n m a
 
-data Vec :: Nat -> Type -> Type where
-  Vec :: Elem a => VS.Vector (C a) -> Vec n a
+newtype Vec :: Nat -> Type -> Type where
+  Vec :: VS.Vector (C a) -> Vec n a
 
 -- | Alias for single precision matrix
 type MatrixXf n m = Matrix n m Float
@@ -147,7 +147,7 @@ coeff _ _ m@(Matrix (Vec vals)) =
       !col  = natToInt @c
   in fromC $! VS.unsafeIndex vals $! col * rows m + row
 
-unsafeCoeff :: KnownNat n => Int -> Int -> Matrix n m a -> a
+unsafeCoeff :: (Elem a, KnownNat n) => Int -> Int -> Matrix n m a -> a
 {-# INLINE unsafeCoeff #-}
 unsafeCoeff row col m@(Matrix (Vec vals)) = fromC $! VS.unsafeIndex vals $! col * rows m + row
 
