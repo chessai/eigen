@@ -195,7 +195,6 @@ instance I.Elem a b => Binary (SparseMatrix a b) where
 encode :: I.Elem a b => SparseMatrix a b -> BSL.ByteString
 encode = B.encode
 
-
 -- | Decode sparse matrix from the lazy byte string
 decode :: I.Elem a b => BSL.ByteString -> SparseMatrix a b
 decode = B.decode

@@ -76,7 +76,7 @@ library
       Data.Eigen.Matrix.Mutable
 --      Data.Eigen.SparseMatrix
 --      Data.Eigen.SparseMatrix.Mutable
---      Data.Eigen.Parallel
+      Data.Eigen.Parallel
       Data.Eigen.Internal
 
     ghc-options:

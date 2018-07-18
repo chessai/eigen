@@ -1,7 +1,7 @@
 {- |
-Some Eigen's algorithms can exploit the multiple cores present in your hardware.
+Some of Eigen's algorithms can exploit the multiple cores present in your hardware.
 To this end, it is enough to enable OpenMP on your compiler, for instance: GCC: -fopenmp.
-You can control the number of thread that will be used using either the OpenMP API or Eiegn's API using the following priority:
+You can control the number of threads that will be used using either by the OpenMP API or by Eigen's API using the following priority:
 
 1. OMP_NUM_THREADS=n ./my_program
 2. setNbThreads n
@@ -12,14 +12,17 @@ You can restore this behaviour by calling @setNbThreads n@
 Currently, the following algorithms can make use of multi-threading: general matrix - matrix products PartialPivLU.
 -}
 
-module Data.Eigen.Parallel where
+module Data.Eigen.Parallel
+  ( setNbThreads
+  , getNbThreads
+  ) where
 
-import Data.Eigen.Internal
+import Data.Eigen.Internal (Cast(..), c_setNbThreads, c_getNbThreads)
 
 -- | Sets the max number of threads reserved for Eigen
 setNbThreads :: Int -> IO ()
-setNbThreads = c_setNbThreads . cast
+setNbThreads = c_setNbThreads . toC
 
 -- | Gets the max number of threads reserved for Eigen
 getNbThreads :: IO Int
-getNbThreads = fmap cast $ c_getNbThreads
+getNbThreads = fromC <$> c_getNbThreads
