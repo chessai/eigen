@@ -9,11 +9,34 @@
 {-# LANGUAGE TypeOperators       #-}
 
 module Data.Eigen.SparseMatrix.Mutable
-  ( MSparseMatrix(..)
+  ( 
+    -- * Mutable SparseMatrix 
+    MSparseMatrix(..)
   , IOSparseMatrix
   , STSparseMatrix
+  , new
+  , reserve
+
+    -- * SparseMatrix properties
+  , rows
+  , cols
+  , innerSize
+  , outerSize
+  , nonZeros
+
+    -- * SparseMatrix compression
+  , compressed
+  , compress
+  , uncompress
+
+    -- * Accessing SparseMatrix data
+  , read
+  , write
+  , setZero
+  , setIdentity
   ) where
 
+import Prelude hiding (read)
 import Control.Monad.Primitive (PrimMonad(..), unsafePrimToPrim)
 import Data.Kind (Type)
 import Foreign.C.String (CString)
@@ -97,6 +120,9 @@ setIdentity = _inplace Internal.sparse_setIdentity
 
 setZero :: (Elem a, PrimMonad p) => MSparseMatrix n m (PrimState p) a -> p ()
 setZero = _inplace Internal.sparse_setZero
+
+reserve :: (Elem a, PrimMonad p) => MSparseMatrix n m (PrimState p) a -> Int -> p ()
+reserve m s = _inplace (\p -> Internal.sparse_reserve p (toC s)) m
 
 nonZeros :: (Elem a, PrimMonad p) => MSparseMatrix n m (PrimState p) a -> p Int
 nonZeros = _prop Internal.sparse_nonZeros (pure . fromC)
