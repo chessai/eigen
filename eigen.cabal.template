@@ -74,7 +74,7 @@ library
 --      Data.Eigen.SparseLA
       Data.Eigen.Matrix
       Data.Eigen.Matrix.Mutable
---      Data.Eigen.SparseMatrix
+      Data.Eigen.SparseMatrix
       Data.Eigen.SparseMatrix.Mutable
       Data.Eigen.Parallel
       Data.Eigen.Internal
@@ -83,12 +83,12 @@ library
       -Wall -fno-warn-name-shadowing
     build-depends:
         base >= 4.9 && < 5
-      , vector >= 0.5 && < 0.13
-      , primitive >= 0.1 && < 0.7
       , binary
       , bytestring
-      , ghc-typelits-extra 
+      , constraints 
+      , primitive >= 0.1 && < 0.7
       , transformers >= 0.3
+      , vector >= 0.5 && < 0.13
     default-language:
       Haskell2010
 

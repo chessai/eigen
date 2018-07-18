@@ -1,5 +1,5 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
@@ -10,8 +10,6 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
-
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 
 module Data.Eigen.Matrix
   ( Matrix(..)
@@ -26,6 +24,7 @@ import Prelude hiding (map)
 import Control.Monad (forM_)
 import Control.Monad.Primitive (PrimMonad(..))
 import Data.Complex (Complex)
+import Data.Constraint.Nat
 import Data.Eigen.Internal
   ( Elem
   , C(..)
@@ -40,7 +39,6 @@ import Data.Kind (Type)
 import Data.Proxy (Proxy(..))
 import GHC.Natural (Natural)
 import GHC.TypeLits (Nat, type (*), type (<=), type (<=?), natVal, KnownNat)
-import GHC.TypeLits.Extra
 import Foreign.C.Types (CInt)
 import Foreign.C.String (CString)
 import Foreign.Marshal.Alloc (alloca)
@@ -204,7 +202,7 @@ blueNorm = _prop Internal.blueNorm
 hypotNorm = _prop Internal.hypotNorm
 
 -- | The determinant of the matrix
-determinant :: (Elem a, KnownNat n, KnownNat m) => Matrix n n a -> a
+determinant :: forall n a. (Elem a, KnownNat n) => Matrix n n a -> a
 determinant m = _prop Internal.determinant m
 
 add :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix n m a -> Matrix n m a
@@ -293,13 +291,13 @@ foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
-diagonal :: (Elem a, KnownNat n, KnownNat m, KnownNat (Min n m)) => Matrix n m a -> Matrix (Min n m) 1 a
+diagonal :: (Elem a, KnownNat n, KnownNat m, minNat n m) => Matrix n m a -> Matrix (Min n m) 1 a
 diagonal = _unop Internal.diagonal
 
 {- | Inverse of the matrix
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
 -}
-inverse :: (Elem a, KnownNat n, KnownNat m) => Matrix n n a -> Matrix n n a
+inverse :: forall n a. (Elem a, KnownNat n) => Matrix n n a -> Matrix n n a
 inverse = _unop Internal.inverse
 
 -- | Adjoint of the matrix

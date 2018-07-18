@@ -62,17 +62,6 @@ natToInt :: forall n. KnownNat n => Int
 {-# INLINE natToInt #-}
 natToInt = fromIntegral (natVal @n Proxy)
 
--- five :: Proxy 6
--- five = intToProxyNat 5
-
--- intToProxyNat :: forall n. KnownNat n => Int -> Proxy n
--- intToProxyNat !i = reifyNat (fromIntegral i) (\_ -> Proxy)
-
---{-# INLINE intToProxyNat #-}
---intToProxyNat !i = case TypeLits.someNatVal (fromIntegral i) of
---  Nothing -> Proxy
---  Just (SomeNat (p :: Proxy n)) -> p
-
 --------------------------------------------------------------------------------
 
 -- | Cast to and from a C-FFI type
