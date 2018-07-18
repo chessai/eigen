@@ -75,7 +75,7 @@ library
       Data.Eigen.Matrix
       Data.Eigen.Matrix.Mutable
 --      Data.Eigen.SparseMatrix
---      Data.Eigen.SparseMatrix.Mutable
+      Data.Eigen.SparseMatrix.Mutable
       Data.Eigen.Parallel
       Data.Eigen.Internal
 
