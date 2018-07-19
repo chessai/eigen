@@ -11,13 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Data.Eigen.Matrix
-  ( Matrix(..)
-  , MatrixXf
-  , MatrixXd
-  , MatrixXcf
-  , MatrixXcd
-  ) where
+module Data.Eigen.Matrix where
 
 import Control.Monad.ST (ST)
 import Prelude hiding (map)
@@ -291,8 +285,8 @@ foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
-diagonal :: (Elem a, KnownNat n, KnownNat m, minNat n m) => Matrix n m a -> Matrix (Min n m) 1 a
-diagonal = _unop Internal.diagonal
+--diagonal :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix (Min n m) 1 a
+--diagonal = _unop Internal.diagonal
 
 {- | Inverse of the matrix
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition

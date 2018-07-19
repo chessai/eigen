@@ -12,13 +12,18 @@
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE ForeignFunctionInterface  #-}
 {-# LANGUAGE FunctionalDependencies    #-}
+{-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE KindSignatures            #-}
+{-# LANGUAGE LambdaCase                #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE Rank2Types                #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE StandaloneDeriving        #-}
 {-# LANGUAGE TypeApplications          #-}
 {-# LANGUAGE TypeFamilyDependencies    #-}
 {-# LANGUAGE TypeInType                #-}
 {-# LANGUAGE UnboxedTuples             #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 --------------------------------------------------------------------------------
 
@@ -41,13 +46,12 @@ import           Foreign.C.Types          (CInt(CInt), CFloat(CFloat), CDouble(C
 import           Foreign.ForeignPtr       (ForeignPtr, castForeignPtr, withForeignPtr)
 import           Foreign.Ptr              (Ptr, castPtr, nullPtr, plusPtr)
 import           Foreign.Storable         (Storable(sizeOf, alignment, poke, peek, peekByteOff, peekElemOff, pokeByteOff, pokeElemOff))
-import           GHC.TypeLits             (natVal, KnownNat, Nat, SomeNat(SomeNat))
-import qualified GHC.TypeLits             as TypeLits
+import           GHC.Exts                 (magicDict)
+import           GHC.TypeLits             (natVal, KnownNat, Nat)
 import           System.IO.Unsafe         (unsafeDupablePerformIO)
 import qualified Data.Vector.Storable     as VS
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Internal as BSI
-import           Unsafe.Coerce            (unsafeCoerce)
 
 --------------------------------------------------------------------------------
 
@@ -56,11 +60,28 @@ data Row (r :: Nat) = Row
 -- | Like 'Proxy', but specialised to 'Nat'.
 data Col (c :: Nat) = Col
 
--- data SNat (n :: Nat) = SNat
-
 natToInt :: forall n. KnownNat n => Int
 {-# INLINE natToInt #-}
 natToInt = fromIntegral (natVal @n Proxy)
+
+newtype SNat (n :: Nat) = SNat Int
+data WrapN a b = WrapN (KnownNat a => Proxy a -> b)
+withSNat :: (KnownNat a => Proxy a -> b)
+         -> SNat a      -> Proxy a -> b
+withSNat f x y = magicDict (WrapN f) x y
+newtype SomeNat' (n :: Nat) = SomeNat' (Proxy n)
+someNatVal' :: forall n. Int -> Maybe (SomeNat' n)
+someNatVal' n
+  | n < 0 = Nothing
+  | otherwise = Just $ withSNat SomeNat' (SNat n) Proxy
+
+
+--intToRow :: forall r. (KnownNat r) => Int -> Maybe (Row r)
+--intToRow i = case someNatVal' i of
+--  Nothing -> Nothing
+--  Just (SomeNat' p) -> case sameNat p (Proxy @r) of
+--    Nothing -> Nothing
+--    Just _ -> Just $ Row @r
 
 --------------------------------------------------------------------------------
 
@@ -99,12 +120,12 @@ instance Cast a => Cast (Complex a) where
   {-# INLINE fromC #-}
 
 -- | WARNING! 'toC' is lossy for any Int greater than (maxBound :: Int32)!
-instance Cast (Int, Int, a) where
+instance Cast a => Cast (Int, Int, a) where
   type C (Int, Int, a) = CTriplet a
   {-# INLINE toC #-}
-  toC (x, y, z) = CTriplet (toC x) (toC y) z
+  toC (x, y, z) = CTriplet (toC x) (toC y) (toC z)
   {-# INLINE fromC #-}
-  fromC (CTriplet x y z) = (fromC x, fromC y, z)
+  fromC (CTriplet x y z) = (fromC x, fromC y, fromC z)
 
 --------------------------------------------------------------------------------
 
@@ -124,9 +145,14 @@ instance Storable a => Storable (CComplex a) where
 --------------------------------------------------------------------------------
 
 -- | FIXME: Doc
-data CTriplet a = CTriplet !CInt !CInt !a deriving Show
+data CTriplet a where
+  CTriplet :: Cast a => !CInt -> !CInt -> !(C a) -> CTriplet a
 
-instance Storable a => Storable (CTriplet a) where
+deriving instance (Show a, Show (C a)) => Show (CTriplet a)
+
+-- = CTriplet !CInt !CInt !(C a) deriving Show
+
+instance (Storable a, Elem a) => Storable (CTriplet a) where
     sizeOf _ = sizeOf (undefined :: a) + sizeOf (undefined :: CInt) * 2
     alignment _ = alignment (undefined :: CInt)
     poke p (CTriplet row col val) = do
@@ -141,7 +167,7 @@ instance Storable a => Storable (CTriplet a) where
 --------------------------------------------------------------------------------
 
 -- | FIXME: Doc
-class (Num a, Cast a, Storable (C a), Code (C a)) => Elem a
+class (Num a, Cast a, Storable a, Storable (C a), Code (C a)) => Elem a
 
 instance Elem Float
 instance Elem Double
@@ -278,8 +304,8 @@ foreign import ccall "eigen-proxy.h eigen_getNbThreads" c_getNbThreads :: IO CIn
 
 #api2 sparse_new,           "CInt -> CInt -> Ptr (CSparseMatrixPtr a) -> IO CString"
 #api2 sparse_clone,         "CSparseMatrixPtr a -> Ptr (CSparseMatrixPtr a) -> IO CString"
-#api2 sparse_fromList,      "CInt -> CInt -> Ptr (CTriplet (C a)) -> CInt -> Ptr (CSparseMatrixPtr a) -> IO CString"
-#api2 sparse_toList,        "CSparseMatrixPtr a -> Ptr (CTriplet (C a)) -> CInt -> IO CString"
+#api2 sparse_fromList,      "CInt -> CInt -> Ptr (CTriplet a) -> CInt -> Ptr (CSparseMatrixPtr a) -> IO CString"
+#api2 sparse_toList,        "CSparseMatrixPtr a -> Ptr (CTriplet a) -> CInt -> IO CString"
 #api2 sparse_free,          "CSparseMatrixPtr a -> IO CString"
 #api2 sparse_makeCompressed,"CSparseMatrixPtr a -> Ptr (CSparseMatrixPtr a) -> IO CString"
 #api2 sparse_uncompress,    "CSparseMatrixPtr a -> Ptr (CSparseMatrixPtr a) -> IO CString"
