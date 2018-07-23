@@ -13,10 +13,14 @@
 
 module Data.Eigen.Matrix where
 
+import Control.Monad (when)
 import Control.Monad.ST (ST)
 import Prelude hiding (map)
 import Control.Monad (forM_)
 import Control.Monad.Primitive (PrimMonad(..))
+import Data.Binary (Binary(..))
+import qualified Data.Binary as Binary
+import qualified Data.ByteString.Lazy as BSL
 import Data.Complex (Complex)
 import Data.Constraint.Nat
 import Data.Eigen.Internal
@@ -47,6 +51,25 @@ newtype Matrix :: Nat -> Nat -> Type -> Type where
 
 newtype Vec :: Nat -> Type -> Type where
   Vec :: VS.Vector (C a) -> Vec n a
+
+instance forall n m a. (KnownNat n, KnownNat m, Elem a) => Binary (Matrix n m a) where
+  put (Matrix (Vec vals)) = do
+    put $ Internal.magicCode (undefined :: C a)
+    put $ natToInt @n
+    put $ natToInt @m
+    put vals
+
+  get = do
+    get >>= (`when` fail "wrong matrix type") . (/= Internal.magicCode (undefined :: C a))
+    Matrix . Vec <$> get
+
+-- | Encode the sparse matrix as a lazy bytestring
+encode :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> BSL.ByteString
+encode = Binary.encode
+
+-- | Decode the sparse matrix from a lazy bytestring
+decode :: (Elem a, KnownNat n, KnownNat m) => BSL.ByteString -> Matrix n m a
+decode = Binary.decode
 
 -- | Alias for single precision matrix
 type MatrixXf n m = Matrix n m Float
@@ -210,7 +233,7 @@ mul m1 m2 = _binop Internal.mul m1 m2
 
 {- | Apply a given function to each element of the matrix.
 Here is an example how to implement scalar matrix multiplication:
->>> let a = fromList [[1,2],[3,4]] :: MatrixXf
+>>> let a = fromList [[1,2],[3,4]] :: MatrixXf 2 2
 >>> a
 Matrix 2x2
 1.0 2.0

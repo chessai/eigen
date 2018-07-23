@@ -690,7 +690,7 @@ source-repository head
 
 library
     exposed-modules:
---      Data.Eigen.LA
+      Data.Eigen.LA
 --      Data.Eigen.SparseLA
       Data.Eigen.Matrix
       Data.Eigen.Matrix.Mutable
@@ -706,7 +706,9 @@ library
       , binary
       , bytestring
       , constraints 
+      , ghc-prim 
       , primitive >= 0.1 && < 0.7
+      , refined 
       , transformers >= 0.3
       , vector >= 0.5 && < 0.13
     default-language:

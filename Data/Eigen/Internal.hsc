@@ -246,7 +246,7 @@ type CSolverPtr a = Ptr (CSolver a)
 -- unholyPerformIO :: IO a -> a
 -- unholyPerformIO (IO m) = case m realWorld# of (# _, r #) -> r
 
--- | FIXME: replace with unholyPerformIO
+-- | FIXME: replace with unholyPerformIO (?)
 performIO :: IO a -> a
 performIO = unsafeDupablePerformIO
 

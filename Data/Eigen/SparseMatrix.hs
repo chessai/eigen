@@ -117,7 +117,7 @@ type SparseMatrixXcd n m = SparseMatrix n m (Complex Double)
 values :: Elem a => SparseMatrix n m a -> VS.Vector a
 values = VS.map fromC . _getvec Internal.sparse_values
 
--- | Get the row indices fo the non-zeros.
+-- | Get the row indices of the non-zeros.
 innerIndices :: Elem a => SparseMatrix n m a -> VS.Vector Int
 innerIndices = VS.map fromC . _getvec Internal.sparse_innerIndices
 
