@@ -52,6 +52,11 @@ newtype Matrix :: Nat -> Nat -> Type -> Type where
 newtype Vec :: Nat -> Type -> Type where
   Vec :: VS.Vector (C a) -> Vec n a
 
+-- | Matrix where the dimensions are existentially quantified.
+--   This is useful in the cases that we cannot reify size information,
+--   where it becomes unsafe for the user to use the returned matrix.
+data EMatrix a = forall n m. EMatrix (Matrix n m a)
+
 instance forall n m a. (KnownNat n, KnownNat m, Elem a) => Binary (Matrix n m a) where
   put (Matrix (Vec vals)) = do
     put $ Internal.magicCode (undefined :: C a)
@@ -308,8 +313,8 @@ foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
---diagonal :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix (Min n m) 1 a
---diagonal = _unop Internal.diagonal
+diagonal :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix (Min n m) 1 a
+diagonal = _unop Internal.diagonal
 
 {- | Inverse of the matrix
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
