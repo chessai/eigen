@@ -15,14 +15,14 @@ module Data.Eigen.Matrix where
 
 import Control.Monad (when)
 import Control.Monad.ST (ST)
-import Prelude hiding (map)
+import Prelude hiding (map, null)
 import Control.Monad (forM_)
 import Control.Monad.Primitive (PrimMonad(..))
 import Data.Binary (Binary(..))
 import qualified Data.Binary as Binary
 import qualified Data.ByteString.Lazy as BSL
 import Data.Complex (Complex)
-import Data.Constraint.Nat
+-- import Data.Constraint.Nat
 import Data.Eigen.Internal
   ( Elem
   , C(..)
@@ -32,9 +32,8 @@ import Data.Eigen.Internal
   )
 import qualified Data.Eigen.Internal as Internal
 import qualified Data.Eigen.Matrix.Mutable as M
-import Data.Function ((&))
+import qualified Data.List as List
 import Data.Kind (Type)
-import Data.Proxy (Proxy(..))
 import GHC.Natural (Natural)
 import GHC.TypeLits (Nat, type (*), type (<=), type (<=?), natVal, KnownNat)
 import Foreign.C.Types (CInt)
@@ -52,10 +51,23 @@ newtype Matrix :: Nat -> Nat -> Type -> Type where
 newtype Vec :: Nat -> Type -> Type where
   Vec :: VS.Vector (C a) -> Vec n a
 
+instance forall n m a. (Elem a, Show a, KnownNat n, KnownNat m) => Show (Matrix n m a) where
+  show m = List.concat
+    [ "Matrix ", show (rows m), "x", show (cols m)
+    , "\n", List.intercalate "\n" $ List.map (List.intercalate "\t" . List.map show) $ toList m, "\n"
+    ]
+
+instance forall a. (Elem a, Show a) => Show (EMatrix a) where
+  show (EMatrix m) = show m
+
 -- | Matrix where the dimensions are existentially quantified.
 --   This is useful in the cases that we cannot reify size information,
 --   where it becomes unsafe for the user to use the returned matrix.
-data EMatrix a = forall n m. EMatrix (Matrix n m a)
+data EMatrix a = forall n m. (Elem a, KnownNat n, KnownNat m) => EMatrix (Matrix n m a)
+
+--data EMatrix :: Type -> Type where
+
+
 
 instance forall n m a. (KnownNat n, KnownNat m, Elem a) => Binary (Matrix n m a) where
   put (Matrix (Vec vals)) = do
@@ -97,10 +109,9 @@ null m = cols m == 0 && rows m == 0
 
 -- | Is matrix square?
 --
---   This always returns true, since it is verified by the types.
-square :: Elem a => Matrix n n a -> Bool
+square :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Bool
 {-# INLINE square #-}
-square _ = True
+square _ = natToInt @n == natToInt @m
 
 -- | Matrix where all coeffs are filled with the given value
 constant :: forall n m a. (Elem a, KnownNat n, KnownNat m) => a -> Matrix n m a
@@ -266,7 +277,7 @@ Matrix 3x3
 0.0 0.0 9.0
 -}
 imap :: (Elem a, KnownNat n, KnownNat m) => (Int -> Int -> a -> a) -> Matrix n m a -> Matrix n m a
-imap f m@(Matrix (Vec vals)) =
+imap f (Matrix (Vec vals)) =
   withDims $ \rs _ ->
     VS.imap (\n ->
       let (c,r) = divMod n rs
@@ -313,8 +324,8 @@ foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
-diagonal :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix (Min n m) 1 a
-diagonal = _unop Internal.diagonal
+--diagonal :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix (Min n m) 1 a
+--diagonal = _unop Internal.diagonal
 
 {- | Inverse of the matrix
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
@@ -411,3 +422,26 @@ _unop g m1 = Internal.performIO $ do
               vals0 rows0 cols0
               vals1 rows1 cols1
   unsafeFreeze m0
+
+toList :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> [[a]]
+{-# INLINE toList #-}
+toList m@(Matrix (Vec vals))
+  | null m = []
+  | otherwise = [[fromC $ vals `VS.unsafeIndex` (col * _rows + row) | col <- [0..pred _cols]] | row <- [0..pred _rows]]
+  where
+    !_rows = rows m
+    !_cols = cols m
+
+fromList :: forall n m a. (Elem a, KnownNat n, KnownNat m) => [[a]] -> Maybe (Matrix n m a)
+fromList list = mm
+  where
+    myRows = natToInt @n
+    myCols = natToInt @m
+    _rows = List.length list
+    _cols = List.foldl' max 0 $ List.map List.length list
+    mm = if ((myRows /= _rows) || (myCols /= _cols)) then Nothing else (Just . Matrix . Vec) $ VS.create $ do
+      vm <- VSM.replicate (_rows * _cols) (toC (0 :: a))
+      forM_ (zip [0..] list) $ \(row,vals) ->
+        forM_ (zip [0..] vals) $ \(col, val) ->
+          VSM.write vm (col * _rows + row) (toC val)
+      return vm

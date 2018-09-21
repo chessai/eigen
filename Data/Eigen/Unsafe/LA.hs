@@ -10,7 +10,7 @@
 {-# LANGUAGE StandaloneDeriving    #-}
 
 module Data.Eigen.Unsafe.LA
-  ( Decomposition
+  ( Decomposition(..)
   , solve
   , relativeError
   , rank
@@ -123,7 +123,7 @@ rank d m = Internal.performIO $ alloca $ \pr -> do
 kernel :: forall a n m. (Elem a, KnownNat n, KnownNat m)
   => Decomposition
   -> Matrix n m a
-  -> EMatrix a
+  -> Matrix n m a
 kernel d m = Internal.performIO $
   alloca $ \pvals ->
   alloca $ \prows ->
@@ -136,12 +136,12 @@ kernel d m = Internal.performIO $
       rs <- fromC <$> peek prows
       cs <- fromC <$> peek pcols
       fp <- FC.newForeignPtr vals $ Internal.free vals
-      pure $ EMatrix . Matrix . Vec $ VS.unsafeFromForeignPtr0 fp (rs * cs)
+      pure $ Matrix . Vec $ VS.unsafeFromForeignPtr0 fp (rs * cs)
 
 image :: forall a n m. (Elem a, KnownNat n, KnownNat m)
   => Decomposition
   -> Matrix n m a
-  -> EMatrix a
+  -> Matrix n m a
 image d m = Internal.performIO $
   alloca $ \pvals ->
   alloca $ \prows ->
@@ -154,7 +154,7 @@ image d m = Internal.performIO $
       rs <- fromC <$> peek prows
       cs <- fromC <$> peek pcols
       fp <- FC.newForeignPtr vals $ Internal.free vals
-      pure $ EMatrix . Matrix . Vec $ VS.unsafeFromForeignPtr0 fp (rs * cs)
+      pure $ Matrix . Vec $ VS.unsafeFromForeignPtr0 fp (rs * cs)
 
 
 {- |
@@ -185,9 +185,9 @@ main = print $ linearRegression [
 -}
 --linearRegression :: [[Double]] -> ([Double], Double)
 --linearRegression points = (coeffs, e) where
---    a = M.fromList $ Prelude.map ((1:).tail) points
---    b = M.fromList $ Prelude.map ((:[]).head) points
---    x = solve ColPivHouseholderQR a b
---    e = relativeError x a b
---    coeffs = Prelude.map head $ M.toList x
+--  a = M.fromList $ Prelude.map ((1:).tail) points
+--  b = M.fromList $ Prelude.map ((:[]).head) points
+--  x = solve ColPivHouseholderQR a b
+--  e = relativeError x a b
+--  coeffs = Prelude.map head $ M.toList x
 

@@ -712,6 +712,8 @@ library
       , vector >= 0.5 && < 0.13
     default-language:
       Haskell2010
+    default-extensions:
+      MonadFailDesugaring
 
     include-dirs:
         eigen3
@@ -728,26 +730,26 @@ library
       --std=c++14
 
 Test-Suite test-solve
-    type:               exitcode-stdio-1.0
-    main-is:            test/solve.hs
-    default-language:   Haskell2010
-    build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen
+  type:               exitcode-stdio-1.0
+  main-is:            test/solve.hs
+  default-language:   Haskell2010
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim
 
-Test-Suite test-solve-sparse
-    type:               exitcode-stdio-1.0
-    main-is:            test/solve-sparse.hs
-    default-language:   Haskell2010
-    build-depends:      base, primitive, vector, bytestring, transformers, mtl, binary, eigen
+-- Test-Suite test-solve-sparse
+--     type:               exitcode-stdio-1.0
+--     main-is:            test/solve-sparse.hs
+--     default-language:   Haskell2010
+--     build-depends:      base, primitive, vector, bytestring, transformers, mtl, binary, eigen
 
 Test-Suite test-rank
-    type:               exitcode-stdio-1.0
-    main-is:            test/rank.hs
-    default-language:   Haskell2010
-    build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen
+  type:               exitcode-stdio-1.0
+  main-is:            test/rank.hs
+  default-language:   Haskell2010
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim
 
 Test-Suite test-regression
-    type:               exitcode-stdio-1.0
-    main-is:            test/regression.hs
-    default-language:   Haskell2010
-    build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen
+  type:               exitcode-stdio-1.0
+  main-is:            test/regression.hs
+  default-language:   Haskell2010
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim
 
