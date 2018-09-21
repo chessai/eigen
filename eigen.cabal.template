@@ -1,4 +1,4 @@
-cabal-version:  2.2
+cabal-version:  >= 1.10
 name:           eigen
 version:        3.3.4.1
 homepage:       https://github.com/chessai/eigen
@@ -48,7 +48,7 @@ description:    This module provides Haskell binding for <http://eigen.tuxfamily
                 .
                 Documentation at the most extent replicates original <http://eigen.tuxfamily.org/dox/ Eigen documentation>.
 category:       Data, Math, Algebra, Statistics, Algorithms, Numeric
-license:        BSD-3-Clause
+license:        BSD3
 license-file:   LICENSE
 copyright:      (c) 2013-2015, Oleg Sidorkin,
                 (c) 2018, chessai
@@ -94,7 +94,7 @@ library
                         cbits/eigen-la.cpp
                         cbits/eigen-sparse-la.cpp
     extra-libraries:    stdc++
-    cxx-options:        --std=c++14
+    -- cxx-options:        --std=c++14
 
 Test-Suite test-solve
     type:               exitcode-stdio-1.0
