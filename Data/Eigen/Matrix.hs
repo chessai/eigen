@@ -11,11 +11,82 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Data.Eigen.Matrix where
+module Data.Eigen.Matrix
+  ( Elem
+  , C
+  , natToInt
+  , Row(..)
+  , Col(..)
+  
+  , Matrix(..)
+  , Vec(..)
+  , MatrixXf
+  , MatrixXd
+  , MatrixXcf
+  , MatrixXcd
+
+  , encode
+  , decode
+  
+  , empty
+  , null
+  , square
+
+  , constant
+  , zero
+  , ones
+  , identity
+  , random
+  , rows
+  , cols
+
+  , dims
+  , (!)
+  , coeff
+  , generate
+  , sum
+  , prod
+  , mean
+  , trace
+  , all
+  , any
+  , count
+  , norm
+  , squaredNorm
+  , blueNorm
+  , hypotNorm
+  , determinant
+  , add
+  , sub
+  , mul
+  , map
+  , imap
+  , TriangularMode(..)
+  , triangularView
+  , filter
+  , ifilter
+  , length
+  , foldl
+  , foldl'
+  , inverse
+  , adjoint
+  , transpose
+  , conjugate
+  , normalize
+  , modify
+  , block
+  , unsafeFreeze
+  , unsafeWith
+  , fromList
+  , toList
+
+
+  ) where
 
 import Control.Monad (when)
 import Control.Monad.ST (ST)
-import Prelude hiding (map, null)
+import Prelude hiding
+  (map, null, filter, length, foldl, any, all, sum)
 import Control.Monad (forM_)
 import Control.Monad.Primitive (PrimMonad(..))
 import Data.Binary (Binary(..))
@@ -34,8 +105,7 @@ import qualified Data.Eigen.Internal as Internal
 import qualified Data.Eigen.Matrix.Mutable as M
 import qualified Data.List as List
 import Data.Kind (Type)
-import GHC.Natural (Natural)
-import GHC.TypeLits (Nat, type (*), type (<=), type (<=?), natVal, KnownNat)
+import GHC.TypeLits (Nat, type (*), type (<=), KnownNat)
 import Foreign.C.Types (CInt)
 import Foreign.C.String (CString)
 import Foreign.Marshal.Alloc (alloca)
@@ -56,18 +126,6 @@ instance forall n m a. (Elem a, Show a, KnownNat n, KnownNat m) => Show (Matrix 
     [ "Matrix ", show (rows m), "x", show (cols m)
     , "\n", List.intercalate "\n" $ List.map (List.intercalate "\t" . List.map show) $ toList m, "\n"
     ]
-
-instance forall a. (Elem a, Show a) => Show (EMatrix a) where
-  show (EMatrix m) = show m
-
--- | Matrix where the dimensions are existentially quantified.
---   This is useful in the cases that we cannot reify size information,
---   where it becomes unsafe for the user to use the returned matrix.
-data EMatrix a = forall n m. (Elem a, KnownNat n, KnownNat m) => EMatrix (Matrix n m a)
-
---data EMatrix :: Type -> Type where
-
-
 
 instance forall n m a. (KnownNat n, KnownNat m, Elem a) => Binary (Matrix n m a) where
   put (Matrix (Vec vals)) = do
@@ -282,7 +340,7 @@ imap f (Matrix (Vec vals)) =
     VS.imap (\n ->
       let (c,r) = divMod n rs
       in toC . f r c . fromC) vals
-     
+
 data TriangularMode
   -- | View matrix as a lower triangular matrix.
   = Lower
@@ -377,7 +435,7 @@ block _ _ _ _ m =
 
 unsafeFreeze :: (Elem a, KnownNat n, KnownNat m, PrimMonad p) => M.MMatrix n m (PrimState p) a -> p (Matrix n m a)
 unsafeFreeze m = VS.unsafeFreeze (M.vals m) >>= pure . Matrix . Vec
-
+  
 -- | Pass a pointer to the matrix's data to the IO action. The data may not be modified through the pointer.
 unsafeWith  :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> (Ptr (C a) -> CInt -> CInt -> IO b) -> IO b
 unsafeWith m@(Matrix (Vec (vals))) f =

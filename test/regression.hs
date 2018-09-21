@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
-{-# LANGUAGE RecordWildCards #-}
 import Control.Applicative (liftA2)
 import Data.Eigen.Matrix as M
 import Data.Eigen.Unsafe.LA
@@ -45,19 +45,22 @@ main = do
   print $ M.normalize <$> a
   print $ M.transpose <$> a
 
-{-
-    let
-        a :: MatrixXd
-        a = M.fromList [[0.68,  0.597,  -0.33],[-0.211,  0.823,  0.536],[ 0.566, -0.605, -0.444]]
-        b = M.inverse a
-    print a
-    print b
-    print $ a * b
-    print $ linearRegression [
-            [-4.32, 3.02, 6.89],
-            [-3.79, 2.01, 5.39],
-            [-4.01, 2.41, 6.01],
-            [-3.86, 2.09, 5.55],
-            [-4.10, 2.58, 6.32]]
+  let _a :: Maybe (MatrixXd 3 3)
+      _a = M.fromList
+        [ [0.68,  0.597,  -0.33]
+        , [-0.211,  0.823,  0.536]
+        , [ 0.566, -0.605, -0.444]
+        ]
+      _b = M.inverse <$> _a
+  
+  print _a
+  print _b
+  print $ liftA2 M.mul _a _b
 
--}
+  print $ linearRegression (M.Row @5)
+    [ [-4.32, 3.02, 6.89]
+    , [-3.79, 2.01, 5.39]
+    , [-4.01, 2.41, 6.01]
+    , [-3.86, 2.09, 5.55]
+    , [-4.10, 2.58, 6.32]
+    ]

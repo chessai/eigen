@@ -16,6 +16,7 @@ module Data.Eigen.Unsafe.LA
   , rank
   , kernel
   , image
+  , linearRegression
   ) where
 
 import Data.Eigen.Internal (Elem, Cast(..))
@@ -28,7 +29,8 @@ import GHC.Types
 import Prelude
 import qualified Data.Eigen.Internal as Internal
 import qualified Data.Eigen.Matrix.Mutable as MM
---import qualified Data.Eigen.Matrix as M
+import qualified Data.Eigen.Matrix as M
+import qualified Data.List as List
 import qualified Data.Vector.Storable as VS
 import qualified Foreign.Concurrent as FC
 --import qualified Prelude as Prelude
@@ -156,7 +158,6 @@ image d m = Internal.performIO $
       fp <- FC.newForeignPtr vals $ Internal.free vals
       pure $ Matrix . Vec $ VS.unsafeFromForeignPtr0 fp (rs * cs)
 
-
 {- |
 [(coeffs, error) = linearRegression points] computes multiple linear regression @y = a1 x1 + a2 x2 + ... + an xn + b@ using 'ColPivHouseholderQR' decomposition
 
@@ -168,12 +169,14 @@ image d m = Internal.performIO $
 
 @
 import Data.Eigen.LA
-main = print $ linearRegression [
+main = print $ linearRegression (Row @5)
+  [
     [-4.32, 3.02, 6.89],
     [-3.79, 2.01, 5.39],
     [-4.01, 2.41, 6.01],
     [-3.86, 2.09, 5.55],
-    [-4.10, 2.58, 6.32]]
+    [-4.10, 2.58, 6.32]
+  ]
 @
 
  produces the following output
@@ -183,11 +186,15 @@ main = print $ linearRegression [
  @
 
 -}
---linearRegression :: [[Double]] -> ([Double], Double)
---linearRegression points = (coeffs, e) where
---  a = M.fromList $ Prelude.map ((1:).tail) points
---  b = M.fromList $ Prelude.map ((:[]).head) points
---  x = solve ColPivHouseholderQR a b
---  e = relativeError x a b
---  coeffs = Prelude.map head $ M.toList x
-
+linearRegression :: forall r. (KnownNat r)
+  => Internal.Row r
+  -- -> Internal.Col c
+  -> [[Double]]
+  -> Maybe ([Double], Double)
+linearRegression _ points = do
+  _a :: MatrixXd r 2 <- M.fromList $ List.map ((1:)  . tail) points
+  _b :: MatrixXd r 1 <- M.fromList $ List.map ((:[]) . head) points
+  let _x = solve ColPivHouseholderQR _a _b
+  let e  = relativeError _x _a _b
+  let coeffs = List.map head $ M.toList _x
+  return (coeffs, e)

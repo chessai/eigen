@@ -71,7 +71,7 @@ source-repository head
 library
     exposed-modules:
       Data.Eigen.Unsafe.LA
---      Data.Eigen.SparseLA
+      Data.Eigen.Unsafe.SparseLA
       Data.Eigen.Matrix
       Data.Eigen.Matrix.Mutable
       Data.Eigen.SparseMatrix
@@ -80,7 +80,7 @@ library
       Data.Eigen.Internal
 
     ghc-options:
-      -Wall -fno-warn-name-shadowing
+      -Wall
     build-depends:
         base >= 4.9 && < 5
       , binary

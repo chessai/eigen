@@ -10,7 +10,7 @@
 
 module Data.Eigen.SparseMatrix where
 
-import Control.Monad (when)
+import Control.Monad (when, guard)
 import Control.Monad.Primitive (PrimMonad(..), unsafePrimToPrim)
 import qualified Prelude
 import Prelude hiding (read)
@@ -39,6 +39,7 @@ import Data.Eigen.Internal
   , Col(..)
   , CTriplet(..)
   )
+import qualified Data.List as List
 import qualified Data.Eigen.Internal as Internal
 import qualified Data.Eigen.Matrix as M
 import qualified Data.Eigen.Matrix.Mutable as MM
@@ -280,9 +281,36 @@ toVector m@(SparseMatrix fp) = Internal.performIO $ do
 toList :: Elem a => SparseMatrix n m a -> [(Int, Int, a)]
 toList = Prelude.map fromC . VS.toList . toVector
 
+-- | Construct a sparse matrix from a list of triples (row, val, col)
+--
+fromList :: (Elem a, KnownNat n, KnownNat m) => [(Int, Int, a)] -> SparseMatrix n m a
+fromList = fromVector . VS.fromList . fmap toC
+
 -- | Convert a sparse matrix to a (n X m) dense list of values
 toDenseList :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> [[a]]
 toDenseList mat = [[_unsafeCoeff row col mat | col <- [0 .. _unsafeCols mat - 1]] | row <- [0 .. _unsafeRows mat - 1]]
+
+fromDenseList :: forall n m a. (Elem a, Eq a, KnownNat n, KnownNat m) => [[a]] -> Maybe (SparseMatrix n m a)
+fromDenseList list =
+  let _rows = List.length list
+      _cols = List.foldl' max 0 $ List.map length list
+  in if ((_rows /= (natToInt @n)) || (_cols /= (natToInt @m)))
+    then Nothing
+    else Just $ fromList $ do
+      (row, vals) <- zip [0..] list
+      (col, val) <- zip [0..] vals
+      guard $ val /= 0
+      return (row, col, val)
+      
+  
+--  fromList $ do
+-- (row, vals) <- zip [0..] list
+-- (col, val) <- zip [0..] vals
+-- guard $ val /= 0
+-- return (row, col, val)
+-- where
+--   rows = List.length list
+--   cols = List.foldl' max 0 $ List.map length list
 
 -- | Construct a dense matrix from a sparse matrix
 toMatrix :: (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> M.Matrix n m a

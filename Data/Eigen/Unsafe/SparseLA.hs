@@ -1,10 +1,12 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {- |
 
@@ -68,20 +70,20 @@ Finally, each solver provides some specific features, such as determinant, acces
 
 -}
 
-module Data.Eigen.SparseLA (
+module Data.Eigen.Unsafe.SparseLA (
     -- * Sparse Solvers
-    Solver,
-    DirectSolver,
-    IterativeSolver,
-    OrderingMethod(..),
-    Preconditioner(..),
-    ConjugateGradient(ConjugateGradient),
-    BiCGSTAB(BiCGSTAB),
-    SparseLU(SparseLU),
-    SparseQR(SparseQR),
-    ComputationInfo(..),
-    SolverT,
-    runSolverT,
+    --Solver,
+    --DirectSolver,
+    --IterativeSolver,
+    --OrderingMethod(..),
+    --Preconditioner(..),
+    --ConjugateGradient(ConjugateGradient),
+    --BiCGSTAB(BiCGSTAB),
+    --SparseLU(SparseLU),
+    --SparseQR(SparseQR),
+    --ComputationInfo(..),
+    --SolverT,
+    --runSolverT,
     -- * The Compute step
     {- |
         In the `compute` function, the matrix is generally factorized: LLT for self-adjoint matrices, LDLT for general hermitian matrices,
@@ -100,9 +102,9 @@ module Data.Eigen.SparseLA (
         system where the coefficient matrix has more clustered eigenvalues.
         For real problems, an iterative solver should always be used with a preconditioner.
     -}
-    analyzePattern,
-    factorize,
-    compute,
+    --analyzePattern,
+    --factorize,
+    --compute,
     -- * The Solve step
     {- |
     The `solve` function computes the solution of the linear systems with one or many right hand sides.
@@ -121,29 +123,29 @@ module Data.Eigen.SparseLA (
     --  ...
     @
     -}
-    solve,
+    --solve,
     --solveWithGuess,
-    info,
+    --info,
     -- * Iterative Solvers
-    tolerance,
-    setTolerance,
-    maxIterations,
-    setMaxIterations,
-    Data.Eigen.SparseLA.error,
-    iterations,
+    --tolerance,
+    --setTolerance,
+    --maxIterations,
+    --setMaxIterations,
+    --Data.Eigen.SparseLA.error,
+    --iterations,
     -- * SparseQR Solver
-    matrixR,
-    matrixQ,
-    rank,
-    setPivotThreshold,
+    --matrixR,
+    --matrixQ,
+    --rank,
+    --setPivotThreshold,
     -- * SparseLU Solver
-    setSymmetric,
-    matrixL,
-    matrixU,
-    determinant,
-    absDeterminant,
-    signDeterminant,
-    logAbsDeterminant,
+    --setSymmetric,
+    --matrixL,
+    --matrixU,
+    --determinant,
+    --absDeterminant,
+    --signDeterminant,
+    --logAbsDeterminant,
 ) where
 
 import Prelude as P
@@ -205,7 +207,7 @@ class Solver s => IterativeSolver s where
     The maximal number of iterations and tolerance value can be controlled via the `setMaxIterations` and `setTolerance` methods.
     The defaults are the size of the problem for the maximal number of iterations and @epsilon@ for the tolerance
 -}
-data ConjugateGradient = ConjugateGradient Preconditioner deriving (Show, Read)
+newtype ConjugateGradient = ConjugateGradient Preconditioner deriving (Show, Read)
 instance Solver ConjugateGradient
 instance IterativeSolver ConjugateGradient
 instance I.Code ConjugateGradient where
@@ -220,7 +222,7 @@ instance I.Code ConjugateGradient where
     The maximal number of iterations and tolerance value can be controlled via the `setMaxIterations` and `setTolerance` methods.
     The defaults are the size of the problem for the maximal number of iterations and @epsilon@ for the tolerance
 -}
-data BiCGSTAB = BiCGSTAB Preconditioner deriving (Show, Read)
+newtype BiCGSTAB = BiCGSTAB Preconditioner deriving (Show, Read)
 instance Solver BiCGSTAB
 instance IterativeSolver BiCGSTAB
 instance I.Code BiCGSTAB where
@@ -242,7 +244,7 @@ instance I.Code BiCGSTAB where
     See <http://eigen.tuxfamily.org/dox/group__OrderingMethods__Module.html OrderingMethods module> for the list of
     built-in and external ordering methods.
 -}
-data SparseLU = SparseLU OrderingMethod deriving (Show, Read)
+newtype SparseLU = SparseLU OrderingMethod deriving (Show, Read)
 instance Solver SparseLU
 instance DirectSolver SparseLU
 instance I.Code SparseLU where
@@ -260,7 +262,7 @@ instance I.Code SparseLU where
 
     @R@ is the sparse triangular or trapezoidal matrix. The later occurs when @A@ is rank-deficient.
 -}
-data SparseQR = SparseQR OrderingMethod deriving (Show, Read)
+newtype SparseQR = SparseQR OrderingMethod deriving (Show, Read)
 instance Solver SparseQR
 instance DirectSolver SparseQR
 instance I.Code SparseQR where
@@ -279,62 +281,60 @@ data ComputationInfo
     | InvalidInput
     deriving (Eq, Enum, Show, Read)
 
-type SolverT s a b m = ReaderT (s, ForeignPtr (I.CSolver a b)) m
+newtype SolverT s a p c = SolverT (ReaderT (s, ForeignPtr (I.CSolver a)) p c)
+  deriving (Functor, Applicative, Monad)
 
-runSolverT :: (Solver s, MonadIO m, I.Elem a b) => s -> SolverT s a b m c -> m c
-runSolverT i f = do
-    fs <- liftIO $ alloca $ \ps -> do
-        I.call $ I.sparse_la_newSolver i ps
-        s <- peek ps
-        FC.newForeignPtr s (I.call $ I.sparse_la_freeSolver i s)
-    runReaderT f (i,fs)
+runSolverT :: (Solver s, MonadIO p, I.Elem a) => s -> SolverT s a p c -> p c
+runSolverT i (SolverT f) = do
+  fs <- liftIO $ alloca $ \ps -> do
+    I.call $ I.sparse_la_newSolver i ps
+    s <- peek ps
+    FC.newForeignPtr s (I.call $ I.sparse_la_freeSolver i s)
+  runReaderT f (i,fs)
+
+forSolverT :: (Solver s, MonadIO p, I.Elem a) => (s -> Ptr (I.CSolver a) -> Ptr (I.CSparseMatrix a) -> IO CString) -> SM.SparseMatrix n m a -> SolverT s a p ()
+{-# INLINE forSolverT #-}
+forSolverT f (SM.SparseMatrix fa) = SolverT $ ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s ->
+  withForeignPtr fa $ \a ->
+    I.call $ f i s a
 
 -- | Initializes the iterative solver for the sparsity pattern of the matrix @A@ for further solving @Ax=b@ problems.
-analyzePattern :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m ()
-analyzePattern (SM.SparseMatrix fa) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fa $ \a ->
-        I.call $ I.sparse_la_analyzePattern i s a
+analyzePattern :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p ()
+analyzePattern sm = forSolverT I.sparse_la_analyzePattern sm
 
 -- | Initializes the iterative solver with the numerical values of the matrix @A@ for further solving @Ax=b@ problems.
-factorize :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m ()
-factorize (SM.SparseMatrix fa) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fa $ \a ->
-        I.call $ I.sparse_la_factorize i s a
+factorize :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p ()
+factorize sm = forSolverT I.sparse_la_factorize sm
 
 -- | Initializes the iterative solver with the matrix @A@ for further solving @Ax=b@ problems.
 --
 -- The `compute` method is equivalent to calling both `analyzePattern` and `factorize`.
-compute :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m ()
-compute (SM.SparseMatrix fa) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fa $ \a ->
-        I.call $ I.sparse_la_compute i s a
+compute :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p ()
+compute sm = forSolverT I.sparse_la_compute sm
 
 -- | An expression of the solution @x@ of @Ax=b@ using the current decomposition of @A@.
-solve :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m (SM.SparseMatrix a b)
-solve (SM.SparseMatrix fb) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fb $ \b ->
+solve :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p (SM.SparseMatrix n m a)
+solve (SM.SparseMatrix fb) = SolverT $ ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s ->
+  withForeignPtr fb $ \b ->
     alloca $ \px -> do
-        I.call $ I.sparse_la_solve i s b px
-        x <- peek px
-        SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
+      I.call $ I.sparse_la_solve i s b px
+      x <- peek px
+      SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
+
+-- | The solution @x@ of @Ax=b@ using the current decomposition of @A@ and @x0@ as an initial solution.
+solveWithGuess :: (MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SM.SparseMatrix n m a -> SolverT s a p (SM.SparseMatrix n m a)
+solveWithGuess (SM.SparseMatrix fb) (SM.SparseMatrix fx0) = ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s ->
+  withForeignPtr fb $ \b ->
+  withForeignPtr fx0 $ \x0 ->
+  alloca $ \px -> do
+    I.call $ I.sparse_la_solveWithGuess i s b x0 px
+    x <- peek px
+    SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
 
 {-
--- | The solution @x@ of @Ax=b@ using the current decomposition of @A@ and @x0@ as an initial solution.
-solveWithGuess :: (MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SM.SparseMatrix a b -> SolverT s a b m (SM.SparseMatrix a b)
-solveWithGuess (SM.SparseMatrix fb) (SM.SparseMatrix fx0) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fb $ \b ->
-    withForeignPtr fx0 $ \x0 ->
-    alloca $ \px -> do
-        I.call $ I.sparse_la_solveWithGuess i s b x0 px
-        x <- peek px
-        SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
--}
-
 -- |
 -- * `Success` if the iterations converged or computation was succesful
 -- * `NumericalIssue` if the factorization reports a numerical problem
@@ -437,3 +437,4 @@ _get_matrix f = ask >>= \(i,fs) -> liftIO $
 _set_prop :: (I.Cast c d, Solver s, MonadIO m, Storable c) => (s -> I.CSolverPtr a b -> d -> IO CString) -> c -> SolverT s a b m ()
 _set_prop f x = ask >>= \(i,fs) -> liftIO $
     withForeignPtr fs $ \s -> I.call $ f i s (I.cast x)
+-}
