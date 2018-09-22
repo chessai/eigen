@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeInType          #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module Data.Eigen.SparseMatrix where
+module Eigen.SparseMatrix where
 
 import Control.Monad (when, guard)
 import Control.Monad.Primitive (PrimMonad(..), unsafePrimToPrim)
@@ -29,7 +29,7 @@ import Foreign.Ptr (Ptr)
 import Foreign.Storable (Storable(..))
 import qualified Foreign.Concurrent as FC
 import GHC.TypeLits (Nat, KnownNat, type (<=))
-import Data.Eigen.Internal
+import Eigen.Internal
   ( Elem
   , Cast(..)
   , CSparseMatrix
@@ -40,10 +40,10 @@ import Data.Eigen.Internal
   , CTriplet(..)
   )
 import qualified Data.List as List
-import qualified Data.Eigen.Internal as Internal
-import qualified Data.Eigen.Matrix as M
-import qualified Data.Eigen.Matrix.Mutable as MM
-import qualified Data.Eigen.SparseMatrix.Mutable as SMM
+import qualified Eigen.Internal as Internal
+import qualified Eigen.Matrix as M
+import qualified Eigen.Matrix.Mutable as MM
+import qualified Eigen.SparseMatrix.Mutable as SMM
 
 {-| A versatible sparse matrix representation.
 SparseMatrix is the main sparse matrix representation of Eigen's sparse module.
@@ -316,16 +316,16 @@ fromDenseList list =
 toMatrix :: (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> M.Matrix n m a
 toMatrix (SparseMatrix fp) = Internal.performIO $ do
   m0 :: MM.IOMatrix n m a <- MM.new
-  MM.unsafeWith m0 $ \vals rows cols ->
+  MM.unsafeWith m0 $ \_vals _rows _cols ->
     withForeignPtr fp $ \pm1 ->
-      Internal.call $ Internal.sparse_toMatrix pm1 vals rows cols
+      Internal.call $ Internal.sparse_toMatrix pm1 _vals _rows _cols
   M.unsafeFreeze m0
 
 -- | Construct a sparse matrix from a dense matrix. zero-elements will be compressed.
 fromMatrix :: (Elem a, KnownNat n, KnownNat m) => M.Matrix n m a -> SparseMatrix n m a
 fromMatrix m1 = Internal.performIO $ alloca $ \pm0 ->
-  M.unsafeWith m1 $ \vals rows cols -> do
-    Internal.call $ Internal.sparse_fromMatrix vals rows cols pm0
+  M.unsafeWith m1 $ \_vals _rows _cols -> do
+    Internal.call $ Internal.sparse_fromMatrix _vals _rows _cols pm0
     peek pm0 >>= _mk
 
 -- | Yield an immutable copy of the mutable matrix

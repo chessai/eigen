@@ -12,12 +12,12 @@ You can restore this behaviour by calling @setNbThreads n@
 Currently, the following algorithms can make use of multi-threading: general matrix - matrix products PartialPivLU.
 -}
 
-module Data.Eigen.Parallel
+module Eigen.Parallel
   ( setNbThreads
   , getNbThreads
   ) where
 
-import Data.Eigen.Internal (Cast(..), c_setNbThreads, c_getNbThreads)
+import Eigen.Internal (Cast(..), c_setNbThreads, c_getNbThreads)
 
 -- | Sets the max number of threads reserved for Eigen
 setNbThreads :: Int -> IO ()

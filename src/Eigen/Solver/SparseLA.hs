@@ -70,7 +70,7 @@ Finally, each solver provides some specific features, such as determinant, acces
 
 -}
 
-module Data.Eigen.Unsafe.SparseLA (
+module Eigen.Solver.SparseLA (
     -- * Sparse Solvers
     --Solver,
     --DirectSolver,
@@ -161,8 +161,8 @@ import qualified Foreign.Concurrent as FC
 #else
 import Control.Applicative
 #endif
-import qualified Data.Eigen.Internal as I
-import qualified Data.Eigen.SparseMatrix as SM
+import qualified Eigen.Internal as I
+import qualified Eigen.SparseMatrix as SM
 
 {- | Ordering methods for sparse matrices. They are typically used to reduce the number of elements during the sparse matrix
     decomposition (@LLT@, @LU@, @QR@). Precisely, in a preprocessing step, a permutation matrix @P@ is computed using those ordering methods
@@ -323,6 +323,7 @@ solve (SM.SparseMatrix fb) = SolverT $ ask >>= \(i,fs) -> liftIO $
       x <- peek px
       SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
 
+{-
 -- | The solution @x@ of @Ax=b@ using the current decomposition of @A@ and @x0@ as an initial solution.
 solveWithGuess :: (MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SM.SparseMatrix n m a -> SolverT s a p (SM.SparseMatrix n m a)
 solveWithGuess (SM.SparseMatrix fb) (SM.SparseMatrix fx0) = ask >>= \(i,fs) -> liftIO $
@@ -333,6 +334,7 @@ solveWithGuess (SM.SparseMatrix fb) (SM.SparseMatrix fx0) = ask >>= \(i,fs) -> l
     I.call $ I.sparse_la_solveWithGuess i s b x0 px
     x <- peek px
     SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
+-}
 
 {-
 -- |

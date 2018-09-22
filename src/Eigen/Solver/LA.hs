@@ -9,7 +9,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 
-module Data.Eigen.Unsafe.LA
+module Eigen.Solver.LA
   ( Decomposition(..)
   , solve
   , relativeError
@@ -19,17 +19,17 @@ module Data.Eigen.Unsafe.LA
   , linearRegression
   ) where
 
-import Data.Eigen.Internal (Elem, Cast(..))
-import Data.Eigen.Matrix
+import Eigen.Internal (Elem, Cast(..))
+import Eigen.Matrix
 import Foreign.C.Types (CInt)
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Storable (Storable(..))
 import GHC.TypeLits (KnownNat)
 import GHC.Types
 import Prelude
-import qualified Data.Eigen.Internal as Internal
-import qualified Data.Eigen.Matrix.Mutable as MM
-import qualified Data.Eigen.Matrix as M
+import qualified Eigen.Internal as Internal
+import qualified Eigen.Matrix.Mutable as MM
+import qualified Eigen.Matrix as M
 import qualified Data.List as List
 import qualified Data.Vector.Storable as VS
 import qualified Foreign.Concurrent as FC

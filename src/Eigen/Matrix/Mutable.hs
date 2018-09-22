@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeInType          #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module Data.Eigen.Matrix.Mutable
+module Eigen.Matrix.Mutable
   ( -- * Types
     MMatrix(..)
   , MMatrixXf
@@ -38,7 +38,7 @@ module Data.Eigen.Matrix.Mutable
   , fromVector
   ) where
 
-import Data.Eigen.Internal
+import Eigen.Internal
   ( Elem
   , C(..)
   , natToInt
@@ -86,8 +86,8 @@ replicate !val = do
   let !mm_rows = natToInt @n
       !mm_cols = natToInt @m
       !cval    = toC val
-  vals <- VSM.replicate (mm_rows * mm_cols) cval
-  pure (MMatrix $! Vec $! vals)
+  _vals <- VSM.replicate (mm_rows * mm_cols) cval
+  pure (MMatrix $! Vec $! _vals)
 
 -- | Set all elements of the matrix to a given value.
 set :: (PrimMonad p, Elem a) => MMatrix n m (PrimState p) a -> a -> p ()

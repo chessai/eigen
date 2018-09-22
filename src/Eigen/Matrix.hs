@@ -11,7 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Data.Eigen.Matrix
+module Eigen.Matrix
   ( Elem
   , C
   , natToInt
@@ -94,15 +94,15 @@ import qualified Data.Binary as Binary
 import qualified Data.ByteString.Lazy as BSL
 import Data.Complex (Complex)
 -- import Data.Constraint.Nat
-import Data.Eigen.Internal
+import Eigen.Internal
   ( Elem
   , C(..)
   , natToInt
   , Row(..)
   , Col(..)
   )
-import qualified Data.Eigen.Internal as Internal
-import qualified Data.Eigen.Matrix.Mutable as M
+import qualified Eigen.Internal as Internal
+import qualified Eigen.Matrix.Mutable as M
 import qualified Data.List as List
 import Data.Kind (Type)
 import GHC.TypeLits (Nat, type (*), type (<=), KnownNat)

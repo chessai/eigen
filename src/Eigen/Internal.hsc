@@ -15,6 +15,7 @@
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE KindSignatures            #-}
 {-# LANGUAGE LambdaCase                #-}
+{-# LANGUAGE MagicHash                 #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE Rank2Types                #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
@@ -28,7 +29,7 @@
 --------------------------------------------------------------------------------
 
 -- | FIXME: Doc
-module Data.Eigen.Internal
+module Eigen.Internal
   where --   FIXME: Explicit export list
 
 --------------------------------------------------------------------------------
@@ -46,7 +47,6 @@ import           Foreign.C.Types          (CInt(CInt), CFloat(CFloat), CDouble(C
 import           Foreign.ForeignPtr       (ForeignPtr, castForeignPtr, withForeignPtr)
 import           Foreign.Ptr              (Ptr, castPtr, nullPtr, plusPtr)
 import           Foreign.Storable         (Storable(sizeOf, alignment, poke, peek, peekByteOff, peekElemOff, pokeByteOff, pokeElemOff))
-import           GHC.Exts                 (magicDict)
 import           GHC.TypeLits             (natVal, KnownNat, Nat)
 import           System.IO.Unsafe         (unsafeDupablePerformIO)
 import qualified Data.Vector.Storable     as VS
@@ -64,28 +64,17 @@ natToInt :: forall n. KnownNat n => Int
 {-# INLINE natToInt #-}
 natToInt = fromIntegral (natVal @n Proxy)
 
-newtype SNat (n :: Nat) = SNat Int
-data WrapN a b = WrapN (KnownNat a => Proxy a -> b)
-withSNat :: (KnownNat a => Proxy a -> b)
-         -> SNat a      -> Proxy a -> b
-withSNat f x y = magicDict (WrapN f) x y
-newtype SomeNat' (n :: Nat) = SomeNat' (Proxy n)
-someNatVal' :: forall n. Int -> Maybe (SomeNat' n)
-someNatVal' n
-  | n < 0 = Nothing
-  | otherwise = Just $ withSNat SomeNat' (SNat n) Proxy
-
-
---intToRow :: forall r. (KnownNat r) => Int -> Maybe (Row r)
---intToRow i = case someNatVal' i of
---  Nothing -> Nothing
---  Just (SomeNat' p) -> case sameNat p (Proxy @r) of
---    Nothing -> Nothing
---    Just _ -> Just $ Row @r
-
 --------------------------------------------------------------------------------
 
 -- | Cast to and from a C-FFI type
+--   'Cast' is a closed typeclass with an associated injective type family.
+--   It is closed in the sense that we provide only four types
+--   with instances for it; and intend for eigen to only be used
+--   with those four types. The injectivity of the type family is
+--   then useful for avoiding MPTCs. 'Cast' has two functions; 'toC'
+--   and 'fromC', where 'toC' goes from a Haskell type to its associated
+--   C type for internal use, with the C FFI, and 'fromC' goes from the
+--   associated C type to the Haskell type.
 class Cast (a :: Type) where
   type family C a = (result :: Type) | result -> a
   toC   :: a -> C a
@@ -189,7 +178,7 @@ instance Code (CComplex CDouble) where; code _ = 3
 newtype MagicCode = MagicCode CInt deriving Eq
 
 instance Binary MagicCode where
-    put (MagicCode code) = putWord32be $ fromIntegral code
+    put (MagicCode _code) = putWord32be $ fromIntegral _code
     get = MagicCode . fromIntegral <$> getWord32be
 
 -- | FIXME: Doc
@@ -227,7 +216,7 @@ instance Storable a => Binary (VS.Vector a) where
         es = sizeOf (VS.head vs)
         -- `plusForeignPtr` is used qualified here to just remind a reader
         -- that it is defined internally within eigen
-        vs = VS.unsafeFromForeignPtr0 (Data.Eigen.Internal.plusForeignPtr fp fo) (fs `div` es)
+        vs = VS.unsafeFromForeignPtr0 (Eigen.Internal.plusForeignPtr fp fo) (fs `div` es)
         in return vs
 
 --------------------------------------------------------------------------------

@@ -690,15 +690,17 @@ source-repository head
 
 library
     exposed-modules:
-      Data.Eigen.Unsafe.LA
-      Data.Eigen.Unsafe.SparseLA
-      Data.Eigen.Matrix
-      Data.Eigen.Matrix.Mutable
-      Data.Eigen.SparseMatrix
-      Data.Eigen.SparseMatrix.Mutable
-      Data.Eigen.Parallel
-      Data.Eigen.Internal
+      Eigen.Matrix
+      Eigen.Matrix.Mutable
+      Eigen.SparseMatrix
+      Eigen.SparseMatrix.Mutable
+      Eigen.Parallel
+      Eigen.Internal
+      Eigen.Solver.LA
+      Eigen.Solver.SparseLA
 
+    hs-source-dirs:
+      src
     ghc-options:
       -Wall
     build-depends:
@@ -726,8 +728,8 @@ library
       cbits/eigen-sparse-la.cpp
     extra-libraries:
       stdc++
-    cxx-options:
-      --std=c++14
+    -- cxx-options:
+    --   --std=c++14
 
 Test-Suite test-solve
   type:               exitcode-stdio-1.0

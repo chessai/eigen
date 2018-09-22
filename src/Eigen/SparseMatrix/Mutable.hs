@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeInType          #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module Data.Eigen.SparseMatrix.Mutable
+module Eigen.SparseMatrix.Mutable
   ( 
     -- * Mutable SparseMatrix 
     MSparseMatrix(..)
@@ -47,7 +47,7 @@ import Foreign.Storable (Storable(..))
 import qualified Foreign.Concurrent as FC
 import GHC.Exts (RealWorld)
 import GHC.TypeLits (Nat, KnownNat, type (<=))
-import Data.Eigen.Internal
+import Eigen.Internal
   ( Elem
   , Cast(..)
   , CSparseMatrix
@@ -56,7 +56,7 @@ import Data.Eigen.Internal
   , Row
   , Col
   )
-import qualified Data.Eigen.Internal as Internal
+import qualified Eigen.Internal as Internal
 
 newtype MSparseMatrix :: Nat -> Nat -> Type -> Type -> Type where
   MSparseMatrix :: (ForeignPtr (CSparseMatrix a)) -> MSparseMatrix n m s a
