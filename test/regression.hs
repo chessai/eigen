@@ -3,8 +3,8 @@
 {-# LANGUAGE TypeApplications #-}
 
 import Control.Applicative (liftA2)
-import Data.Eigen.Matrix as M
-import Data.Eigen.Unsafe.LA
+import Eigen.Matrix as M
+import Eigen.Solver.LA
 import Data.List as List
 import Control.Monad
 import Data.Maybe (fromMaybe)
@@ -47,7 +47,7 @@ main = do
 
   let _a :: Maybe (MatrixXd 3 3)
       _a = M.fromList
-        [ [0.68,  0.597,  -0.33]
+        [ [ 0.680,  0.597, -0.330]
         , [-0.211,  0.823,  0.536]
         , [ 0.566, -0.605, -0.444]
         ]

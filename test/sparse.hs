@@ -1,4 +1,4 @@
-import Data.Eigen.SparseMatrix
+import Eigen.SparseMatrix
 
 a :: Maybe (SparseMatrixXd 3 3)
 a = fromList [(0,2,1),(1,0,1),(1,2,2),(2,1,-3)]

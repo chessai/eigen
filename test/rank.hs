@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import Data.Eigen.Matrix
-import Data.Eigen.Unsafe.LA
+import Eigen.Matrix
+import Eigen.Solver.LA
 
 a :: Maybe (MatrixXf 3 3)
 a = fromList [[1,2,5],[2,1,4],[3,0,3]]

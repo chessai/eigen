@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import Data.Eigen.Matrix
-import Data.Eigen.Unsafe.LA
+import Eigen.Matrix
+import Eigen.Solver.LA
 import Data.Maybe (fromMaybe)
 
 solution :: Maybe (MatrixXd 3 1)
