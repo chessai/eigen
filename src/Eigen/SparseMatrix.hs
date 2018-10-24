@@ -86,6 +86,17 @@ For more infomration please see Eigen <http://eigen.tuxfamily.org/dox/classEigen
 newtype SparseMatrix :: Nat -> Nat -> Type -> Type where
   SparseMatrix :: ForeignPtr (CSparseMatrix a) -> SparseMatrix n m a
 
+instance forall n m a. (Elem a, Show a, KnownNat n, KnownNat m) => Show (SparseMatrix n m a) where
+  show m = concat
+    [ "SparseMatrix"
+    , show (rows_ m)
+    , "x"
+    , show (cols_ m)
+    , "\n"
+    , List.intercalate "\n" $ Prelude.map (List.intercalate "\t" . Prelude.map show) $ toDenseList m
+    , "\n"
+    ]
+
 instance forall n m a. (Elem a, KnownNat n, KnownNat m) => Binary (SparseMatrix n m a) where
   put mat = do
     put $ Internal.magicCode (undefined :: C a)
@@ -141,6 +152,15 @@ rows _ = Row @n
 -- | Number of colums in the sparse matrix
 cols :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> Col m
 cols _ = Col @m
+
+-- | Number of rows in the sparse matrix
+rows_ :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> Int
+rows_ _ = natToInt @n
+
+-- | Number of colums in the sparse matrix
+cols_ :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> Int
+cols_ _ = natToInt @m
+
 
 -- | Sparse matrix coefficient at the given row and column
 coeff :: forall n m r c a. (Elem a, KnownNat n, KnownNat m, KnownNat r, KnownNat c, r <= n, c <= m)
