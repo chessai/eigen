@@ -3,7 +3,11 @@ name:           eigen
 version:        3.3.4.1
 homepage:       https://github.com/chessai/eigen
 synopsis:       Eigen C++ library (linear algebra: matrices, sparse matrices, vectors, numerical solvers).
-description:    This module provides Haskell binding for <http://eigen.tuxfamily.org/ Eigen C++ library>.
+description:    **NOTE**: This library does not follow PVP. Instead, it follows Eigen's versioning. Version
+                X.Y.Z.W means that the Eigen version is X.Y.Z, and the haskell release is W, where each W
+                release is for bug fixes/API improvements.
+                .
+                This module provides Haskell binding for <http://eigen.tuxfamily.org/ Eigen C++ library>.
                 .
                 Eigen is versatile.
                 .
@@ -55,7 +59,7 @@ copyright:      (c) 2013-2015, Oleg Sidorkin,
 author:         Oleg Sidorkin <oleg.sidorkin@gmail.com>
 maintainer:     chessai <chessai1996@gmail.com>
 build-type:     Simple
-tested-with:    GHC == 7.8.3, GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3
+tested-with:    GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.1
 extra-source-files: cbits/eigen-runtime.h
     cbits/eigen-dense.h
     cbits/eigen-la.h
@@ -84,13 +88,13 @@ library
     ghc-options:
       -Wall
     build-depends:
-        base >= 4.9 && < 5
+        base >= 4.10 && < 5
       , binary >= 0.8.0.0 && < 0.8.6.0
       , bytestring >= 0.10.4.0 && < 0.11.0.0
-      , constraints 
-      , ghc-prim 
-      , primitive >= 0.1 && < 0.7
-      , transformers >= 0.3
+      , constraints >= 0.10.0 && < 0.11.0
+      , ghc-prim
+      , primitive >= 0.6.4.0 && < 0.7
+      , transformers >= 0.3 && < 0.6
       , vector >= 0.5 && < 0.13
     default-language:
       Haskell2010

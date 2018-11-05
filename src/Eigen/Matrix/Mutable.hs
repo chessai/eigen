@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns        #-}
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE KindSignatures      #-}
@@ -7,6 +8,11 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeInType          #-}
 {-# LANGUAGE TypeOperators       #-}
+
+#if __GLASGOW_HASKELL__ >= 805
+{-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE ExplicitNamespaces #-}
+#endif
 
 module Eigen.Matrix.Mutable
   ( -- * Types

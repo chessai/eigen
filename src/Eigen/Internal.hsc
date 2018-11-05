@@ -29,8 +29,7 @@
 --------------------------------------------------------------------------------
 
 -- | FIXME: Doc
-module Eigen.Internal
-  where --   FIXME: Explicit export list
+module Eigen.Internal where --   FIXME: Explicit export list
 
 --------------------------------------------------------------------------------
 
