@@ -39,6 +39,7 @@ module Eigen.Matrix
   , random
   , rows
   , cols
+  , diagonal
 
   , dims
   , (!)
@@ -79,8 +80,6 @@ module Eigen.Matrix
   , unsafeWith
   , fromList
   , toList
-
-
   ) where
 
 import Control.Monad (when)
@@ -93,7 +92,7 @@ import Data.Binary (Binary(..))
 import qualified Data.Binary as Binary
 import qualified Data.ByteString.Lazy as BSL
 import Data.Complex (Complex)
--- import Data.Constraint.Nat
+import Data.Constraint.Nat
 import Eigen.Internal
   ( Elem
   , C(..)
@@ -382,8 +381,8 @@ foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
---diagonal :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix (Min n m) 1 a
---diagonal = _unop Internal.diagonal
+diagonal :: (Elem a, KnownNat n, KnownNat m, r ~ Min n m, KnownNat r) => Matrix n m a -> Matrix r 1 a
+diagonal = _unop Internal.diagonal
 
 {- | Inverse of the matrix
 For small fixed sizes up to 4x4, this method uses cofactors. In the general case, this method uses PartialPivLU decomposition
