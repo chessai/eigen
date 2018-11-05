@@ -1,8 +1,6 @@
 eigen
 =====
 
-Currently a fork of eigen, because the maintainer is unresponsive.
-
 Documentation on Hackage https://hackage.haskell.org/package/eigen
 
 Eigen documentation page http://eigen.tuxfamily.org/dox/
