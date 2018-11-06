@@ -1,10 +1,13 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {- |
 
@@ -68,99 +71,101 @@ Finally, each solver provides some specific features, such as determinant, acces
 
 -}
 
-module Data.Eigen.SparseLA (
+module Eigen.Solver.SparseLA
+  (
     -- * Sparse Solvers
-    Solver,
-    DirectSolver,
-    IterativeSolver,
-    OrderingMethod(..),
-    Preconditioner(..),
-    ConjugateGradient(ConjugateGradient),
-    BiCGSTAB(BiCGSTAB),
-    SparseLU(SparseLU),
-    SparseQR(SparseQR),
-    ComputationInfo(..),
-    SolverT,
-    runSolverT,
-    -- * The Compute step
-    {- |
-        In the `compute` function, the matrix is generally factorized: LLT for self-adjoint matrices, LDLT for general hermitian matrices,
-        LU for non hermitian matrices and QR for rectangular matrices. These are the results of using direct solvers.
-        For this class of solvers precisely, the compute step is further subdivided into `analyzePattern` and `factorize`.
+    Solver 
+  , DirectSolver
+  , IterativeSolver
+  , OrderingMethod(..)
+  , Preconditioner(..)
+  , ConjugateGradient(..)
+  , BiCGSTAB(..)
+  , SparseLU(..)
+  , SparseQR(..)
+  , ComputationInfo(..)
+  , SolverT(..)
+  , runSolverT
+  -- * The Compute step
+  {- |
+      In the `compute` function, the matrix is generally factorized: LLT for self-adjoint matrices, LDLT for general hermitian matrices,
+      LU for non hermitian matrices and QR for rectangular matrices. These are the results of using direct solvers.
+      For this class of solvers precisely, the compute step is further subdivided into `analyzePattern` and `factorize`.
 
-        The goal of `analyzePattern` is to reorder the nonzero elements of the matrix, such that the factorization step creates less fill-in.
-        This step exploits only the structure of the matrix. Hence, the results of this step can be used for other linear systems where the
-        matrix has the same structure.
+      The goal of `analyzePattern` is to reorder the nonzero elements of the matrix, such that the factorization step creates less fill-in.
+      This step exploits only the structure of the matrix. Hence, the results of this step can be used for other linear systems where the
+      matrix has the same structure.
 
-        In `factorize`, the factors of the coefficient matrix are computed. This step should be called each time the values of the matrix change.
-        However, the structural pattern of the matrix should not change between multiple calls.
+      In `factorize`, the factors of the coefficient matrix are computed. This step should be called each time the values of the matrix change.
+      However, the structural pattern of the matrix should not change between multiple calls.
 
-        For iterative solvers, the `compute` step is used to eventually setup a preconditioner.
-        Remember that, basically, the goal of the preconditioner is to speedup the convergence of an iterative method by solving a modified linear
-        system where the coefficient matrix has more clustered eigenvalues.
-        For real problems, an iterative solver should always be used with a preconditioner.
-    -}
-    analyzePattern,
-    factorize,
-    compute,
-    -- * The Solve step
-    {- |
-    The `solve` function computes the solution of the linear systems with one or many right hand sides.
+      For iterative solvers, the `compute` step is used to eventually setup a preconditioner.
+      Remember that, basically, the goal of the preconditioner is to speedup the convergence of an iterative method by solving a modified linear
+      system where the coefficient matrix has more clustered eigenvalues.
+      For real problems, an iterative solver should always be used with a preconditioner.
+  -}
+  , analyzePattern
+  , factorize
+  , compute
+  -- * The Solve step
+  {- |
+  The `solve` function computes the solution of the linear systems with one or many right hand sides.
 
-    @
-    x <- solve b
-    @
+  @
+  x <- solve b
+  @
 
-    Here, @b@ can be a vector or a matrix where the columns form the different right hand sides.
-    The `solve` function can be called several times as well, for instance when all the right hand sides are not available at once.
+  Here, @b@ can be a vector or a matrix where the columns form the different right hand sides.
+  The `solve` function can be called several times as well, for instance when all the right hand sides are not available at once.
 
-    @
-    x1 <- solve b1
-    -- Get the second right hand side b2
-    x2 <- solve b2
-    --  ...
-    @
-    -}
-    solve,
-    --solveWithGuess,
-    info,
-    -- * Iterative Solvers
-    tolerance,
-    setTolerance,
-    maxIterations,
-    setMaxIterations,
-    Data.Eigen.SparseLA.error,
-    iterations,
-    -- * SparseQR Solver
-    matrixR,
-    matrixQ,
-    rank,
-    setPivotThreshold,
-    -- * SparseLU Solver
-    setSymmetric,
-    matrixL,
-    matrixU,
-    determinant,
-    absDeterminant,
-    signDeterminant,
-    logAbsDeterminant,
-) where
+  @
+  x1 <- solve b1
+  -- Get the second right hand side b2
+  x2 <- solve b2
+  --  ...
+  @
+  -}
+  , solve
+  -- , solveWithGuess
+  , info
+  -- * Iterative Solvers
+  , tolerance
+  , setTolerance
+  , maxIterations
+  , setMaxIterations
+  , error
+  , iterations
+  -- * SparseQR Solver
+  , matrixR
+  , matrixQ
+  , rank
+  , setPivotThreshold
+  -- * SparseLU Solver
+  , setSymmetric
+  , matrixL
+  , matrixU
+  , determinant
+  , absDeterminant
+  , signDeterminant
+  , logAbsDeterminant
+  ) where
 
-import Prelude as P
+import Prelude hiding (error)
 import Foreign.Ptr
 import Foreign.ForeignPtr
 import Foreign.Storable
 import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 import qualified Foreign.Concurrent as FC
 #if __GLASGOW_HASKELL__ >= 710
 #else
 import Control.Applicative
 #endif
-import qualified Data.Eigen.Internal as I
-import qualified Data.Eigen.SparseMatrix as SM
+import qualified Eigen.Internal as I
+import qualified Eigen.SparseMatrix as SM
 
 {- | Ordering methods for sparse matrices. They are typically used to reduce the number of elements during the sparse matrix
     decomposition (@LLT@, @LU@, @QR@). Precisely, in a preprocessing step, a permutation matrix @P@ is computed using those ordering methods
@@ -205,7 +210,7 @@ class Solver s => IterativeSolver s where
     The maximal number of iterations and tolerance value can be controlled via the `setMaxIterations` and `setTolerance` methods.
     The defaults are the size of the problem for the maximal number of iterations and @epsilon@ for the tolerance
 -}
-data ConjugateGradient = ConjugateGradient Preconditioner deriving (Show, Read)
+newtype ConjugateGradient = ConjugateGradient Preconditioner deriving (Show, Read)
 instance Solver ConjugateGradient
 instance IterativeSolver ConjugateGradient
 instance I.Code ConjugateGradient where
@@ -220,7 +225,7 @@ instance I.Code ConjugateGradient where
     The maximal number of iterations and tolerance value can be controlled via the `setMaxIterations` and `setTolerance` methods.
     The defaults are the size of the problem for the maximal number of iterations and @epsilon@ for the tolerance
 -}
-data BiCGSTAB = BiCGSTAB Preconditioner deriving (Show, Read)
+newtype BiCGSTAB = BiCGSTAB Preconditioner deriving (Show, Read)
 instance Solver BiCGSTAB
 instance IterativeSolver BiCGSTAB
 instance I.Code BiCGSTAB where
@@ -242,7 +247,7 @@ instance I.Code BiCGSTAB where
     See <http://eigen.tuxfamily.org/dox/group__OrderingMethods__Module.html OrderingMethods module> for the list of
     built-in and external ordering methods.
 -}
-data SparseLU = SparseLU OrderingMethod deriving (Show, Read)
+newtype SparseLU = SparseLU OrderingMethod deriving (Show, Read)
 instance Solver SparseLU
 instance DirectSolver SparseLU
 instance I.Code SparseLU where
@@ -260,7 +265,7 @@ instance I.Code SparseLU where
 
     @R@ is the sparse triangular or trapezoidal matrix. The later occurs when @A@ is rank-deficient.
 -}
-data SparseQR = SparseQR OrderingMethod deriving (Show, Read)
+newtype SparseQR = SparseQR OrderingMethod deriving (Show, Read)
 instance Solver SparseQR
 instance DirectSolver SparseQR
 instance I.Code SparseQR where
@@ -279,161 +284,166 @@ data ComputationInfo
     | InvalidInput
     deriving (Eq, Enum, Show, Read)
 
-type SolverT s a b m = ReaderT (s, ForeignPtr (I.CSolver a b)) m
+newtype SolverT s a p c = SolverT (ReaderT (s, ForeignPtr (I.CSolver a)) p c)
+  deriving (Functor, Applicative, Monad, MonadTrans)
 
-runSolverT :: (Solver s, MonadIO m, I.Elem a b) => s -> SolverT s a b m c -> m c
-runSolverT i f = do
-    fs <- liftIO $ alloca $ \ps -> do
-        I.call $ I.sparse_la_newSolver i ps
-        s <- peek ps
-        FC.newForeignPtr s (I.call $ I.sparse_la_freeSolver i s)
-    runReaderT f (i,fs)
+runSolverT :: (Solver s, MonadIO p, I.Elem a) => s -> SolverT s a p c -> p c
+runSolverT i (SolverT f) = do
+  fs <- liftIO $ alloca $ \ps -> do
+    I.call $ I.sparse_la_newSolver i ps
+    s <- peek ps
+    FC.newForeignPtr s (I.call $ I.sparse_la_freeSolver i s)
+  runReaderT f (i,fs)
+
+forSolverT :: (Solver s, MonadIO p, I.Elem a) => (s -> Ptr (I.CSolver a) -> Ptr (I.CSparseMatrix a) -> IO CString) -> SM.SparseMatrix n m a -> SolverT s a p ()
+{-# INLINE forSolverT #-}
+forSolverT f (SM.SparseMatrix fa) = SolverT $ ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s ->
+  withForeignPtr fa $ \a ->
+    I.call $ f i s a
 
 -- | Initializes the iterative solver for the sparsity pattern of the matrix @A@ for further solving @Ax=b@ problems.
-analyzePattern :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m ()
-analyzePattern (SM.SparseMatrix fa) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fa $ \a ->
-        I.call $ I.sparse_la_analyzePattern i s a
+analyzePattern :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p ()
+analyzePattern sm = forSolverT I.sparse_la_analyzePattern sm
 
 -- | Initializes the iterative solver with the numerical values of the matrix @A@ for further solving @Ax=b@ problems.
-factorize :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m ()
-factorize (SM.SparseMatrix fa) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fa $ \a ->
-        I.call $ I.sparse_la_factorize i s a
+factorize :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p ()
+factorize sm = forSolverT I.sparse_la_factorize sm
 
 -- | Initializes the iterative solver with the matrix @A@ for further solving @Ax=b@ problems.
 --
 -- The `compute` method is equivalent to calling both `analyzePattern` and `factorize`.
-compute :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m ()
-compute (SM.SparseMatrix fa) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fa $ \a ->
-        I.call $ I.sparse_la_compute i s a
+compute :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p ()
+compute sm = forSolverT I.sparse_la_compute sm
 
 -- | An expression of the solution @x@ of @Ax=b@ using the current decomposition of @A@.
-solve :: (Solver s, MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SolverT s a b m (SM.SparseMatrix a b)
-solve (SM.SparseMatrix fb) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fb $ \b ->
+solve :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SolverT s a p (SM.SparseMatrix n m a)
+solve (SM.SparseMatrix fb) = SolverT $ ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s ->
+  withForeignPtr fb $ \b ->
     alloca $ \px -> do
-        I.call $ I.sparse_la_solve i s b px
-        x <- peek px
-        SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
+      I.call $ I.sparse_la_solve i s b px
+      x <- peek px
+      SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
 
-{-
 -- | The solution @x@ of @Ax=b@ using the current decomposition of @A@ and @x0@ as an initial solution.
-solveWithGuess :: (MonadIO m, I.Elem a b) => SM.SparseMatrix a b -> SM.SparseMatrix a b -> SolverT s a b m (SM.SparseMatrix a b)
-solveWithGuess (SM.SparseMatrix fb) (SM.SparseMatrix fx0) = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s ->
-    withForeignPtr fb $ \b ->
-    withForeignPtr fx0 $ \x0 ->
-    alloca $ \px -> do
-        I.call $ I.sparse_la_solveWithGuess i s b x0 px
-        x <- peek px
-        SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
--}
+--solveWithGuess :: (Solver s, MonadIO p, I.Elem a) => SM.SparseMatrix n m a -> SM.SparseMatrix n m a -> SolverT s a p (SM.SparseMatrix n m a)
+--solveWithGuess (SM.SparseMatrix fb) (SM.SparseMatrix fx0) = SolverT $ ask >>= \(i,fs) -> liftIO $
+--  withForeignPtr fs $ \s ->
+--  withForeignPtr fb $ \b ->
+--  withForeignPtr fx0 $ \x0 ->
+--  alloca $ \px -> do
+--    I.call $ I.sparse_la_solveWithGuess i s b x0 px
+--    x <- peek px
+--    SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
 
 -- |
 -- * `Success` if the iterations converged or computation was succesful
 -- * `NumericalIssue` if the factorization reports a numerical problem
 -- * `NoConvergence` if the iterations are not converged
 -- * `InvalidInput` if the input matrix is invalid
-info :: (Solver s, MonadIO m, I.Elem a b) => SolverT s a b m ComputationInfo
-info = _get_prop I.sparse_la_info >>= \x -> return (toEnum x)
+info :: (Solver s, MonadIO p, I.Elem a) => SolverT s a p ComputationInfo
+info = _get_prop I.sparse_la_info >>= \x -> pure (toEnum x)
 
 -- | The tolerance threshold used by the stopping criteria.
-tolerance :: (IterativeSolver s, MonadIO m, I.Elem a b) => SolverT s a b m Double
+tolerance :: (IterativeSolver s, MonadIO p, I.Elem a) => SolverT s a p Double
 tolerance = _get_prop I.sparse_la_tolerance
 
 -- | Sets the tolerance threshold used by the stopping criteria.
 --
 --   This value is used as an upper bound to the relative residual error: @|Ax-b|/|b|@. The default value is the machine precision given by @epsilon@
-setTolerance :: (IterativeSolver s, MonadIO m, I.Elem a b) => Double -> SolverT s a b m ()
+setTolerance :: (IterativeSolver s, MonadIO p, I.Elem a) => Double -> SolverT s a p ()
 setTolerance = _set_prop I.sparse_la_setTolerance
 
 -- | The max number of iterations. It is either the value setted by setMaxIterations or, by default, twice the number of columns of the matrix.
-maxIterations :: (IterativeSolver s, MonadIO m, I.Elem a b) => SolverT s a b m Int
+maxIterations :: (IterativeSolver s, MonadIO p, I.Elem a) => SolverT s a p Int
 maxIterations = _get_prop I.sparse_la_maxIterations
 
 -- | Sets the max number of iterations. Default is twice the number of columns of the matrix.
-setMaxIterations :: (IterativeSolver s, MonadIO m, I.Elem a b) => Int -> SolverT s a b m ()
+setMaxIterations :: (IterativeSolver s, MonadIO p, I.Elem a) => Int -> SolverT s a p ()
 setMaxIterations = _set_prop I.sparse_la_setMaxIterations
 
 -- | The tolerance error reached during the last solve. It is a close approximation of the true relative residual error @|Ax-b|/|b|@.
-error :: (IterativeSolver s, MonadIO m, I.Elem a b) => SolverT s a b m Double
+error :: (IterativeSolver s, MonadIO p, I.Elem a) => SolverT s a p Double
 error = _get_prop I.sparse_la_error
 
 -- | The number of iterations performed during the last solve
-iterations :: (IterativeSolver s, MonadIO m, I.Elem a b) => SolverT s a b m Int
+iterations :: (IterativeSolver s, MonadIO p, I.Elem a) => SolverT s a p Int
 iterations = _get_prop I.sparse_la_iterations
 
 -- | Returns the @b@ sparse upper triangular matrix @R@ of the QR factorization.
-matrixR :: (MonadIO m, I.Elem a b) => SolverT SparseQR a b m (SM.SparseMatrix a b)
+matrixR :: (MonadIO p, I.Elem a) => SolverT SparseQR a p (SM.SparseMatrix n m a)
 matrixR = _get_matrix I.sparse_la_matrixR
 
 -- | Returns the matrix @Q@ as products of sparse Householder reflectors.
-matrixQ :: (MonadIO m, I.Elem a b) => SolverT SparseQR a b m (SM.SparseMatrix a b)
+matrixQ :: (MonadIO p, I.Elem a) => SolverT SparseQR a p (SM.SparseMatrix n m a)
 matrixQ = _get_matrix I.sparse_la_matrixQ
 
 -- | Sets the threshold that is used to determine linearly dependent columns during the factorization.
 --
 -- In practice, if during the factorization the norm of the column that has to be eliminated is below
 -- this threshold, then the entire column is treated as zero, and it is moved at the end.
-setPivotThreshold :: (MonadIO m, I.Elem a b) => Double -> SolverT SparseQR a b m ()
+setPivotThreshold :: (MonadIO p, I.Elem a) => Double -> SolverT SparseQR a p ()
 setPivotThreshold = _set_prop I.sparse_la_setPivotThreshold
 
 -- | Returns the number of non linearly dependent columns as determined by the pivoting threshold.
-rank :: (MonadIO m, I.Elem a b) => SolverT SparseQR a b m Int
+rank :: (MonadIO p, I.Elem a) => SolverT SparseQR a p Int
 rank = _get_prop I.sparse_la_rank
 
 -- | Indicate that the pattern of the input matrix is symmetric
-setSymmetric :: (MonadIO m, I.Elem a b) => Bool -> SolverT SparseLU a b m ()
+setSymmetric :: (MonadIO p, I.Elem a) => Bool -> SolverT SparseLU a p ()
 setSymmetric = _set_prop I.sparse_la_setSymmetric . fromEnum
 
 -- | Returns the matrix @L@
-matrixL :: (MonadIO m, I.Elem a b) => SolverT SparseLU a b m (SM.SparseMatrix a b)
+matrixL :: (MonadIO p, I.Elem a) => SolverT SparseLU a p (SM.SparseMatrix n m a)
 matrixL = _get_matrix I.sparse_la_matrixL
 
 -- | Returns the matrix @U@
-matrixU :: (MonadIO m, I.Elem a b) => SolverT SparseLU a b m (SM.SparseMatrix a b)
+matrixU :: (MonadIO p, I.Elem a) => SolverT SparseLU a p (SM.SparseMatrix n m a)
 matrixU = _get_matrix I.sparse_la_matrixU
 
 -- | The determinant of the matrix.
-determinant :: (MonadIO m, I.Elem a b) => SolverT SparseLU a b m a
+determinant :: (MonadIO p, I.Elem a) => SolverT SparseLU a p a
 determinant = _get_prop I.sparse_la_determinant
 
 -- | The natural log of the absolute value of the determinant of the matrix of which this is the QR decomposition
 --
 -- This method is useful to work around the risk of overflow/underflow that's inherent to the determinant computation.
-logAbsDeterminant :: (MonadIO m, I.Elem a b) => SolverT SparseLU a b m a
+logAbsDeterminant :: (MonadIO p, I.Elem a) => SolverT SparseLU a p a
 logAbsDeterminant = _get_prop I.sparse_la_logAbsDeterminant
 
 -- | The absolute value of the determinant of the matrix of which *this is the QR decomposition.
 --
 -- A determinant can be very big or small, so for matrices of large enough dimension, there is a risk of overflow/underflow.
 -- One way to work around that is to use `logAbsDeterminant` instead.
-absDeterminant :: (MonadIO m, I.Elem a b) => SolverT SparseLU a b m a
+absDeterminant :: (MonadIO p, I.Elem a) => SolverT SparseLU a p a
 absDeterminant = _get_prop I.sparse_la_absDeterminant
 
 -- | A number representing the sign of the determinant
-signDeterminant :: (MonadIO m, I.Elem a b) => SolverT SparseLU a b m a
+signDeterminant :: (MonadIO p, I.Elem a) => SolverT SparseLU a p a
 signDeterminant = _get_prop I.sparse_la_signDeterminant
 
-_get_prop :: (I.Cast c d, Solver s, MonadIO m, Storable c) => (s -> I.CSolverPtr a b -> Ptr c -> IO CString) -> SolverT s a b m d
-_get_prop f = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s -> alloca $ \px -> do
-        I.call $ f i s px
-        I.cast <$> peek px
+_get_prop :: (I.Cast d, Solver s, MonadIO p, Storable c, c ~ I.C d)
+  => (s -> I.CSolverPtr a -> Ptr c -> IO CString)
+  -> SolverT s a p d
+_get_prop f = SolverT $ ask >>= \(i, fs) -> liftIO $
+  withForeignPtr fs $ \s -> alloca $ \px -> do
+    I.call (f i s px)
+    I.fromC <$> peek px
 
-_get_matrix :: (Solver s, MonadIO m, I.Elem a b) => (s -> I.CSolverPtr a b -> Ptr (I.CSparseMatrixPtr a b) -> IO CString) -> SolverT s a b m (SM.SparseMatrix a b)
-_get_matrix f = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s -> alloca $ \px -> do
-        I.call $ f i s px
-        x <- peek px
-        SM.SparseMatrix <$> FC.newForeignPtr x (I.call $ I.sparse_free x)
+_get_matrix :: (Solver s, MonadIO p, I.Elem a)
+  => (s -> I.CSolverPtr a -> Ptr (I.CSparseMatrixPtr a) -> IO CString)
+  -> SolverT s a p (SM.SparseMatrix n m a)
+_get_matrix f = SolverT $ ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s -> alloca $ \px -> do
+    I.call (f i s px)
+    x <- peek px
+    SM.SparseMatrix <$> FC.newForeignPtr x (I.call (I.sparse_free x))
 
-_set_prop :: (I.Cast c d, Solver s, MonadIO m, Storable c) => (s -> I.CSolverPtr a b -> d -> IO CString) -> c -> SolverT s a b m ()
-_set_prop f x = ask >>= \(i,fs) -> liftIO $
-    withForeignPtr fs $ \s -> I.call $ f i s (I.cast x)
+_set_prop :: (I.Cast c, d ~ I.C c, Solver s, MonadIO p, Storable c)
+  => (s -> I.CSolverPtr a -> d -> IO CString)
+  -> c
+  -> SolverT s a p ()
+_set_prop f x = SolverT $ ask >>= \(i,fs) -> liftIO $
+  withForeignPtr fs $ \s -> I.call (f i s (I.toC x))
+

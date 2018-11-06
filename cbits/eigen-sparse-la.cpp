@@ -190,8 +190,8 @@ API_ALL(sparse_la_solve, (int code, int s, void* p, void* b, void** x), (p,b,x))
 
 // template <class T, class M, class S>
 // RET sparse_la_solveWithGuess(void* p, void* b, void* x0, void** x) {
-//  *x = new M(((S*)p)->solveWithGuess(Matrix<T,Dynamic,Dynamic>(*(M*)b), Matrix<T,Dynamic,Dynamic>(*(M*)x0)));
-//  return 0;
+//     *x = new M(((S*)p)->solveWithGuess(Matrix<T,Dynamic,Dynamic>(*(M*)b), Matrix<T,Dynamic,Dynamic>(*(M*)x0)));
+//     return 0;
 // }
 // API_ALL(sparse_la_solveWithGuess, (int code, int s, void* p, void* b, void* x0, void** x), (p,b,x0,x));
 

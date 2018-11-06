@@ -1,6 +1,12 @@
 #include "eigen-sparse.h"
 #include <Eigen/LU>
 
+#if __cplusplus > 199711L
+  #define SMART_PTR std::unique_ptr
+#else
+  #define SMART_PTR std::auto_ptr
+#endif
+
 template <class T>
 RET sparse_new(int rows, int cols, void** pr) {
     typedef SparseMatrix<T> M;
@@ -21,7 +27,7 @@ template <class T>
 RET sparse_fromList(int rows, int cols, void* data, int size, void** pr) {
     typedef SparseMatrix<T> M;
     typedef Triplet<T> E;
-    std::unique_ptr<M> a(new M(rows, cols));
+    SMART_PTR<M> a(new M(rows, cols));
     a->setFromTriplets((E*)data, (E*)data + size);
     *(M**)pr = a.release();
     return 0;
