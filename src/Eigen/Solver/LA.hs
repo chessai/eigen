@@ -98,6 +98,7 @@ solve d a b = Internal.performIO $ do
                 b_vals b_rows b_cols
   unsafeFreeze x
 
+-- | [e = relativeError x a b] computes @norm (ax - b) / norm b@ where @norm@ is L2 norm
 relativeError :: (KnownNat n, KnownNat m, KnownNat n1, KnownNat m1, KnownNat n2, KnownNat m2, Elem a)
   => Matrix n m a
   -> Matrix n1 m1 a
@@ -114,6 +115,7 @@ relativeError x a b = Internal.performIO $
             b_vals b_rows b_cols
           fromC <$> peek pe
 
+-- | The rank of the matrix.
 rank :: (KnownNat n, KnownNat m, Elem a)
   => Decomposition
   -> Matrix n m a
@@ -122,6 +124,7 @@ rank d m = Internal.performIO $ alloca $ \pr -> do
   Internal.call $ unsafeWith m $ Internal.rank (con2CTag d) pr
   fromC <$> peek pr
 
+-- | Return the matrix whose columns form a basis of the null-space of @A@.
 kernel :: forall a n m. (Elem a, KnownNat n, KnownNat m)
   => Decomposition
   -> Matrix n m a
@@ -140,6 +143,7 @@ kernel d m = Internal.performIO $
       fp <- FC.newForeignPtr vals $ Internal.free vals
       pure $ Matrix . Vec $ VS.unsafeFromForeignPtr0 fp (rs * cs)
 
+-- | Return a matrix whose columns form a basis of the column-space of @A@.
 image :: forall a n m. (Elem a, KnownNat n, KnownNat m)
   => Decomposition
   -> Matrix n m a
@@ -182,7 +186,7 @@ main = print $ linearRegression (Row @5)
  produces the following output
 
  @
- ([-2.3466569233817127,-0.2534897541434826,-0.1749653335680988],1.8905965120153139e-3)
+ Just ([-2.3466569233817127,-0.2534897541434826,-0.1749653335680988],1.8905965120153139e-3)
  @
 
 -}

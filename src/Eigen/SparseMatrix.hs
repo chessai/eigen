@@ -8,12 +8,81 @@
 {-# LANGUAGE TypeInType          #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module Eigen.SparseMatrix where
+module Eigen.SparseMatrix
+  ( -- * Types
+    SparseMatrix(..)
+  , SparseMatrixXf
+  , SparseMatrixXd
+  , SparseMatrixXcf
+  , SparseMatrixXcd
+
+    -- * Matrix internal data
+  , elems
+  , values
+  , innerIndices
+  , outerStarts
+  , innerNNZs
+
+    -- * Accessors
+  , cols
+  , rows
+  , coeff
+  , (!)
+  , getRow
+  , getCol
+
+    -- * Matrix conversions
+  , fromList
+  , toList
+  , fromVector
+  , toVector
+  , fromDenseList
+  , toDenseList
+  , fromMatrix
+  , toMatrix
+
+    -- * Matrix properties
+  , norm
+  , squaredNorm
+  , blueNorm
+  , block
+  , nonZeros
+  , innerSize
+  , outerSize
+
+    -- * Basic matrix algebra
+  , add
+  , sub
+  , mul
+
+    -- * Matrix tranformations
+  , pruned
+  , scale
+  , transpose
+  , adjoint
+  , map
+  , imap
+
+    -- * Matrix representation
+  , compress
+  , uncompress
+  , compressed
+
+    -- * Matrix serialisation
+  , encode
+  , decode
+
+    -- * Mutable matrices
+  , thaw
+  , freeze
+  , unsafeThaw
+  , unsafeFreeze
+  ) where
 
 import Control.Monad (when, guard)
 import Control.Monad.Primitive (PrimMonad(..), unsafePrimToPrim)
 import qualified Prelude
-import Prelude hiding (read)
+import Prelude hiding (read, map)
 import Data.Binary (Binary(..))
 import qualified Data.Binary as Binary
 import qualified Data.ByteString.Lazy as BSL
@@ -265,14 +334,19 @@ sub = _binop Internal.sparse_sub _mk
 mul :: Elem a => SparseMatrix p q a -> SparseMatrix q r a -> SparseMatrix p r a
 mul = _binop Internal.sparse_mul _mk
 
+-- | Map a function over the 'SparseMatrix'.
 map :: (Elem a, Elem b, KnownNat n, KnownNat m) => (a -> b) -> SparseMatrix n m a -> SparseMatrix n m b
 map f m = fromVector . VS.map g . toVector $ m where
   g (CTriplet r c v) = CTriplet r c $ (toC . f . fromC) v
 
+-- | Map an indexed function over the 'SparseMatrix'.
 imap :: (Elem a, Elem b, KnownNat n, KnownNat m) => (Int -> Int -> a -> b) -> SparseMatrix n m a -> SparseMatrix n m b
 imap f m = fromVector . VS.map g . toVector $ m where
   g (CTriplet r c v) =
-    CTriplet r c $ toC $ f (fromC r) (fromC c) (fromC v)
+    let !_r = fromC r
+        !_c = fromC c
+        !_v = fromC v
+    in CTriplet r c $ toC $ f _r _c _v
 
 -- | Construct asparse matrix of the given size from the storable vector of triplets (row, col, val)
 fromVector :: forall n m a. (Elem a, KnownNat n, KnownNat m)
@@ -306,10 +380,13 @@ toList = Prelude.map fromC . VS.toList . toVector
 fromList :: (Elem a, KnownNat n, KnownNat m) => [(Int, Int, a)] -> SparseMatrix n m a
 fromList = fromVector . VS.fromList . fmap toC
 
--- | Convert a sparse matrix to a (n X m) dense list of values
+-- | Convert a sparse matrix to a (n X m) dense list of values.
 toDenseList :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> [[a]]
 toDenseList mat = [[_unsafeCoeff row col mat | col <- [0 .. _unsafeCols mat - 1]] | row <- [0 .. _unsafeRows mat - 1]]
 
+-- | Construct a sparsematrix from a two-dimensional list of values.
+--   If the dimensions of the list do not match that of the list, 'Nothing' is returned.
+--   Zero values will be compressed.
 fromDenseList :: forall n m a. (Elem a, Eq a, KnownNat n, KnownNat m) => [[a]] -> Maybe (SparseMatrix n m a)
 fromDenseList list =
   let _rows = List.length list
@@ -364,9 +441,11 @@ unsafeFreeze (SMM.MSparseMatrix fp) = return $! SparseMatrix fp
 unsafeThaw :: (Elem a, PrimMonad p) => SparseMatrix n m a -> p (SMM.MSparseMatrix n m (PrimState p) a) 
 unsafeThaw (SparseMatrix fp) = return $! SMM.MSparseMatrix fp
 
+-- | Return a single row of the sparse matrix.
 getRow :: forall n m r a. (Elem a, KnownNat n, KnownNat m, KnownNat r, r <= n, 1 <= n) => Row r -> SparseMatrix n m a -> SparseMatrix 1 m a
 getRow row mat = block row (Col @0) (Row @1) (Col @m) mat
 
+-- | Return a single column of the sparse matrix.
 getCol :: forall n m c a. (Elem a, KnownNat n, KnownNat m, KnownNat c, c <= m, 1 <= m) => Col c -> SparseMatrix n m a -> SparseMatrix n 1 a
 getCol col mat = block (Row @0) col (Row @n) (Col @1) mat
 

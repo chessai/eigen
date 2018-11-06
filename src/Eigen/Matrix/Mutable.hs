@@ -62,9 +62,12 @@ import GHC.Exts (RealWorld)
 import GHC.TypeLits (Nat, type (*), type (<=), KnownNat)
 import qualified Data.Vector.Storable.Mutable as VSM
 
+-- | A mutable matrix. See 'Eigen.Matrix.Matrix' for
+--   details about matrix layout.
 newtype MMatrix :: Nat -> Nat -> Type -> Type -> Type where
   MMatrix :: Vec (n * m) s a -> MMatrix n m s a
 
+-- | Used internally to track the size and corresponding C type of the matrix.
 newtype Vec :: Nat -> Type -> Type -> Type where
   Vec :: VSM.MVector s (C a) -> Vec n s a
 
@@ -77,7 +80,9 @@ type MMatrixXcf n m s = MMatrix n m s (Complex Float)
 -- | Alias for double precision mutable matrix of complex numbers
 type MMatrixXcd n m s = MMatrix n m s (Complex Double)
 
+-- | A mutable matrix where the state token is specialised to 'RealWorld'.
 type IOMatrix n m a   = MMatrix n m RealWorld a
+-- | This type does not differ from MSparseMatrix, but might be desirable for readability.
 type STMatrix n m s a = MMatrix n m s a
 
 -- | Create a mutable matrix of the given size and fill it with 0 as an initial value.
@@ -138,10 +143,12 @@ unsafeWith (MMatrix (Vec m)) f =
       !cmm_cols = toC $! natToInt @m
   in VSM.unsafeWith m $ \p -> f p cmm_rows cmm_cols
 
+-- | Return a mutable storable 'VSM.MVector' of the corresponding C types to one's mutable matrix.
 vals :: MMatrix n m s a -> VSM.MVector s (C a)
 {-# INLINE vals #-}
 vals (MMatrix (Vec x)) = x
 
+-- | Create a mutable matrix from a mutable storable 'VSM.MVector'.
 fromVector :: Elem a => VSM.MVector s (C a) -> MMatrix n m s a
 {-# INLINE fromVector #-}
 fromVector x = MMatrix (Vec x)

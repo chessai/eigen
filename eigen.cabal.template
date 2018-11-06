@@ -1,9 +1,9 @@
 cabal-version:  >= 1.10
 name:           eigen
-version:        3.3.4.1
+version:        3.3.4.2
 homepage:       https://github.com/chessai/eigen
 synopsis:       Eigen C++ library (linear algebra: matrices, sparse matrices, vectors, numerical solvers).
-description:    **NOTE**: This library does not follow PVP. Instead, it follows Eigen's versioning. Version
+description:    __NOTE__: This library does not follow PVP. Instead, it follows Eigen's versioning. Version
                 X.Y.Z.W means that the Eigen version is X.Y.Z, and the haskell release is W, where each W
                 release is for bug fixes/API improvements.
                 .

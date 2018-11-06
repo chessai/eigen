@@ -28,7 +28,10 @@
 
 --------------------------------------------------------------------------------
 
--- | FIXME: Doc
+-- | Internal module to Eigen.
+--   Here we define all foreign function calls,
+--   and some typeclasses integral to the public and private interfaces
+--   of the library.
 module Eigen.Internal where --   FIXME: Explicit export list
 
 --------------------------------------------------------------------------------
@@ -59,6 +62,7 @@ data Row (r :: Nat) = Row
 -- | Like 'Proxy', but specialised to 'Nat'.
 data Col (c :: Nat) = Col
 
+-- | Used internally. Given a 'KnownNat' constraint, turn the type-level 'Nat' into an 'Int'.
 natToInt :: forall n. KnownNat n => Int
 {-# INLINE natToInt #-}
 natToInt = fromIntegral (natVal @n Proxy)
@@ -138,8 +142,6 @@ data CTriplet a where
 
 deriving instance (Show a, Show (C a)) => Show (CTriplet a)
 
--- = CTriplet !CInt !CInt !(C a) deriving Show
-
 instance (Storable a, Elem a) => Storable (CTriplet a) where
     sizeOf _ = sizeOf (undefined :: a) + sizeOf (undefined :: CInt) * 2
     alignment _ = alignment (undefined :: CInt)
@@ -154,7 +156,9 @@ instance (Storable a, Elem a) => Storable (CTriplet a) where
 
 --------------------------------------------------------------------------------
 
--- | FIXME: Doc
+-- | `Elem` is a closed typeclass that encompasses the properties
+--   eigen expects its values to possess, and simplifies the external
+--   API quite a bit.
 class (Num a, Cast a, Storable a, Storable (C a), Code (C a)) => Elem a
 
 instance Elem Float
@@ -173,20 +177,20 @@ instance Code CDouble            where; code _ = 1
 instance Code (CComplex CFloat)  where; code _ = 2
 instance Code (CComplex CDouble) where; code _ = 3
 
--- | FIXME: Doc
+-- | Hack used in constructing FFI calls.
 newtype MagicCode = MagicCode CInt deriving Eq
 
 instance Binary MagicCode where
     put (MagicCode _code) = putWord32be $ fromIntegral _code
     get = MagicCode . fromIntegral <$> getWord32be
 
--- | FIXME: Doc
+-- | Hack used in constructing FFI calls.
 magicCode :: Code a => a -> MagicCode
 magicCode x = MagicCode (code x `xor` 0x45696730)
 
 --------------------------------------------------------------------------------
 
--- | FIXME: Doc
+-- | Machine size of a 'CInt'.
 intSize :: Int
 intSize = sizeOf (undefined :: CInt)
 

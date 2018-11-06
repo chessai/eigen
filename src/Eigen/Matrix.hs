@@ -17,36 +17,42 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Eigen.Matrix
-  ( Elem
-  , C
-  , natToInt
-  , Row(..)
-  , Col(..)
-  
-  , Matrix(..)
+  ( 
+    -- * Types 
+    Matrix(..)
   , Vec(..)
   , MatrixXf
   , MatrixXd
   , MatrixXcf
   , MatrixXcd
 
+    -- * Common API
+  , Elem
+  , C
+  , natToInt
+  , Row(..)
+  , Col(..)
+
+    -- * Encode/Decode a Matrix
   , encode
   , decode
-  
-  , empty
+
+    -- * Querying a Matrix
   , null
   , square
-
+  , rows
+  , cols
+  , dims
+    
+    -- * Constructing a Matrix
+  , empty
   , constant
   , zero
   , ones
   , identity
   , random
-  , rows
-  , cols
   , diagonal
 
-  , dims
   , (!)
   , coeff
   , generate
@@ -100,7 +106,7 @@ import Data.Complex (Complex)
 import Data.Constraint.Nat
 import Eigen.Internal
   ( Elem
-  , C(..)
+  , Cast(..)
   , natToInt
   , Row(..)
   , Col(..)
@@ -119,9 +125,16 @@ import Foreign.Storable (peek)
 import qualified Data.Vector.Storable as VS
 import qualified Data.Vector.Storable.Mutable as VSM
 
+-- | Matrix to be used in pure computations.
+--
+--   * Uses column majour memory layout.
+--
+--   * Has a copy-free FFI using the <http://eigen.tuxfamily.org Eigen> library.
+--
 newtype Matrix :: Nat -> Nat -> Type -> Type where
   Matrix :: Vec (n * m) a -> Matrix n m a
 
+-- | Used internally to track the size and corresponding C type of the matrix.
 newtype Vec :: Nat -> Type -> Type where
   Vec :: VS.Vector (C a) -> Vec n a
 
@@ -229,10 +242,12 @@ dims :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> (Int, 
 {-# INLINE dims #-}
 dims _ = (natToInt @n, natToInt @m)
 
+-- | Return the value at the given position.
 (!) :: forall n m a r c. (Elem a, KnownNat n, KnownNat r, KnownNat c, r <= n, c <= m) => Row r -> Col c -> Matrix n m a -> a
 {-# INLINE (!) #-}
 (!) = coeff
 
+-- | Return the value at the given position.
 coeff :: forall n m a r c. (Elem a, KnownNat n, KnownNat r, KnownNat c, r <= n, c <= m) => Row r -> Col c -> Matrix n m a -> a
 {-# INLINE coeff #-}
 coeff _ _ m@(Matrix (Vec vals)) =
@@ -244,6 +259,8 @@ unsafeCoeff :: (Elem a, KnownNat n) => Int -> Int -> Matrix n m a -> a
 {-# INLINE unsafeCoeff #-}
 unsafeCoeff row col m@(Matrix (Vec vals)) = fromC $! VS.unsafeIndex vals $! col * rows m + row
 
+-- | Given a generation function `f :: Int -> Int -> a`, construct a Matrix of known size
+--   using points in the matrix as inputs.
 generate :: forall n m a. (Elem a, KnownNat n, KnownNat m) => (Int -> Int -> a) -> Matrix n m a
 generate f = withDims $ \rs cs -> VS.create $ do
   vals :: VSM.MVector s (C a) <- VSM.new (rs * cs)
@@ -270,12 +287,15 @@ mean = _prop Internal.mean
 trace :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> a
 trace = _prop Internal.trace
 
+-- | Given a predicate p, determine if all values in the Matrix satisfy p.
 all :: (Elem a, KnownNat n, KnownNat m) => (a -> Bool) -> Matrix n m a -> Bool
 all f (Matrix (Vec vals)) = VS.all (f . fromC) vals
 
+-- | Given a predicate p, determine if any values in the Matrix satisfy p.
 any :: (Elem a, KnownNat n, KnownNat m) => (a -> Bool) -> Matrix n m a -> Bool
 any f (Matrix (Vec vals)) = VS.any (f . fromC) vals
 
+-- | Given a predicate p, determine how many values in the Matrix satisfy p.
 count :: (Elem a, KnownNat n, KnownNat m) => (a -> Bool) -> Matrix n m a -> Int
 count f (Matrix (Vec vals)) = VS.foldl' (\n x-> if f (fromC x) then (n + 1) else n) 0 vals
 
@@ -300,12 +320,15 @@ hypotNorm = _prop Internal.hypotNorm
 determinant :: forall n a. (Elem a, KnownNat n) => Matrix n n a -> a
 determinant m = _prop Internal.determinant m
 
+-- | Add two matrices.
 add :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix n m a -> Matrix n m a
 add m1 m2 = _binop Internal.add m1 m2
 
+-- | Subtract two matrices.
 sub :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix n m a -> Matrix n m a
 sub m1 m2 = _binop Internal.sub m1 m2
 
+-- | Multiply two matrices.
 mul :: (Elem a, KnownNat p, KnownNat q, KnownNat r) => Matrix p q a -> Matrix q r a -> Matrix p r a
 mul m1 m2 = _binop Internal.mul m1 m2
 
@@ -345,6 +368,7 @@ imap f (Matrix (Vec vals)) =
       let (c,r) = divMod n rs
       in toC . f r c . fromC) vals
 
+-- | Provide a view of the matrix for extraction of a subset.
 data TriangularMode
   -- | View matrix as a lower triangular matrix.
   = Lower
@@ -370,22 +394,27 @@ triangularView = \case
   UnitLower     -> imap $ \row col val -> case compare row col of { GT -> val; LT -> 0; EQ -> 1 }
   UnitUpper     -> imap $ \row col val -> case compare row col of { LT -> val; GT -> 0; EQ -> 1 }
 
--- | Filter elements in the matrix. Filtered elements will be replaced by 0
+-- | Filter elements in the matrix. Filtered elements will be replaced by 0.
 filter :: Elem a => (a -> Bool) -> Matrix n m a -> Matrix n m a
 filter f = map (\x -> if f x then x else 0)
 
+-- | Filter elements in the matrix with an indexed predicate. Filtered elements will be replaces by 0.
 ifilter :: (Elem a, KnownNat n, KnownNat m) => (Int -> Int -> a -> Bool) -> Matrix n m a -> Matrix n m a
 ifilter f = imap (\r c x -> if f r c x then x else 0)
 
+-- | The length of the matrix.
 length :: forall n m a r. (Elem a, KnownNat n, KnownNat m, r ~ (n * m), KnownNat r) => Matrix n m a -> Int
 length _ = natToInt @r
 
+-- | Left fold of a matrix, where accumulation is lazy.
 foldl :: (Elem a, KnownNat n, KnownNat m) => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
 
+-- | Right fold of a matrix, where accumulation is strict.
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
 foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
+-- | Return the diagonal of a matrix.
 diagonal :: (Elem a, KnownNat n, KnownNat m, r ~ Min n m, KnownNat r) => Matrix n m a -> Matrix r 1 a
 diagonal = _unop Internal.diagonal
 
@@ -437,6 +466,8 @@ block _ _ _ _ m =
       !startCol = natToInt @sc
   in generate $ \row col -> unsafeCoeff (startRow + row) (startCol + col) m
 
+-- | Turn a mutable matrix into an immutable matrix without copying.
+--   The mutable matrix should not be modified after this conversion.
 unsafeFreeze :: (Elem a, KnownNat n, KnownNat m, PrimMonad p) => M.MMatrix n m (PrimState p) a -> p (Matrix n m a)
 unsafeFreeze m = VS.unsafeFreeze (M.vals m) >>= pure . Matrix . Vec
   
@@ -485,6 +516,7 @@ _unop g m1 = Internal.performIO $ do
               vals1 rows1 cols1
   unsafeFreeze m0
 
+-- | Convert a matrix to a list.
 toList :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> [[a]]
 {-# INLINE toList #-}
 toList m@(Matrix (Vec vals))
@@ -494,16 +526,19 @@ toList m@(Matrix (Vec vals))
     !_rows = rows m
     !_cols = cols m
 
+-- | Convert a list to a matrix. Returns 'Nothing' if the dimensions of the list do not match that
+--   of the matrix.
 fromList :: forall n m a. (Elem a, KnownNat n, KnownNat m) => [[a]] -> Maybe (Matrix n m a)
-fromList list = mm
-  where
-    myRows = natToInt @n
-    myCols = natToInt @m
-    _rows = List.length list
-    _cols = List.foldl' max 0 $ List.map List.length list
-    mm = if ((myRows /= _rows) || (myCols /= _cols)) then Nothing else (Just . Matrix . Vec) $ VS.create $ do
+fromList list = do
+  let myRows = natToInt @n
+  let myCols = natToInt @m
+  let _rows  = List.length list
+  let _cols  = List.foldl' max 0 (List.map List.length list)
+  if ((myRows /= _rows) || (myCols /= _cols))
+    then Nothing
+    else (Just . Matrix . Vec) $ VS.create $ do
       vm <- VSM.replicate (_rows * _cols) (toC (0 :: a))
       forM_ (zip [0..] list) $ \(row,vals) ->
         forM_ (zip [0..] vals) $ \(col, val) ->
           VSM.write vm (col * _rows + row) (toC val)
-      return vm
+      pure vm
