@@ -334,6 +334,7 @@ mul m1 m2 = _binop Internal.mul m1 m2
 
 {- | Apply a given function to each element of the matrix.
 Here is an example how to implement scalar matrix multiplication:
+
 >>> let a = fromList [[1,2],[3,4]] :: MatrixXf 2 2
 >>> a
 Matrix 2x2
