@@ -34,12 +34,16 @@ module Eigen.SparseMatrix
   , getCols
   , unsafeGetCol
   , unsafeGetRow
+  , unsafeFromRows
+  , unsafeFromCols
 
     -- * Matrix conversions
   , fromList
   , toList
   , fromVector
   , toVector
+  , fromVectorSized
+  , fromListSized
   , fromDenseList
   , toDenseList
   , fromMatrix
@@ -50,6 +54,7 @@ module Eigen.SparseMatrix
   , squaredNorm
   , blueNorm
   , block
+  , unsafeBlock
   , nonZeros
   , innerSize
   , outerSize
@@ -234,7 +239,6 @@ rows_ _ = natToInt @n
 cols_ :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> Int
 cols_ _ = natToInt @m
 
-
 -- | Sparse matrix coefficient at the given row and column
 coeff :: forall n m r c a. (Elem a, KnownNat n, KnownNat m, KnownNat r, KnownNat c, r <= n, c <= m)
   => Row r -> Col c -> SparseMatrix n m a -> a
@@ -371,14 +375,7 @@ imap f m = fromVector . VS.map g . toVector $ m where
 fromVector :: forall n m a. (Elem a, KnownNat n, KnownNat m)
   => VS.Vector (CTriplet a)
   -> SparseMatrix n m a
-fromVector tris =
-  let !c_rs = toC $! natToInt @n
-      !c_cs = toC $! natToInt @m
-      !len  = toC $! VS.length tris
-  in Internal.performIO $ VS.unsafeWith tris $ \p ->
-       alloca $ \pq -> do
-         Internal.call $ Internal.sparse_fromList c_rs c_cs p len pq
-         peek pq >>= _mk
+fromVector = fromVectorSized (natToInt @n) (natToInt @m)
 
 -- | Convert a sparse matrix to the list of triplets (row, col, val). Compressed elements will not be included.
 toVector :: Elem a => SparseMatrix n m a -> VS.Vector (CTriplet a)
@@ -398,6 +395,39 @@ toList = Prelude.map fromC . VS.toList . toVector
 --
 fromList :: (Elem a, KnownNat n, KnownNat m) => [(Int, Int, a)] -> SparseMatrix n m a
 fromList = fromVector . VS.fromList . fmap toC
+
+fromListSized :: (Elem a, KnownNat n, KnownNat m) => Int -> Int -> [(Int, Int, a)] -> SparseMatrix n m a
+fromListSized _rows _cols = fromVectorSized _rows _cols . VS.fromList . Prelude.map Internal.toC
+
+fromVectorSized :: forall n m a. (Elem a, KnownNat n, KnownNat m)
+  => Int
+  -> Int
+  -> VS.Vector (CTriplet a)
+  -> SparseMatrix n m a
+fromVectorSized _rows _cols tris =
+  let !c_rs = toC $! _rows
+      !c_cs = toC $! _cols
+      !len  = toC $! VS.length tris
+  in Internal.performIO $ VS.unsafeWith tris $ \p ->
+       alloca $ \pq -> do
+         Internal.call $ Internal.sparse_fromList c_rs c_cs p len pq
+         peek pq >>= _mk
+
+
+-- | Construct asparse matrix of the given size from the storable vector of triplets (row, col, val)
+--fromVector :: forall n m a. (Elem a, KnownNat n, KnownNat m)
+--  => VS.Vector (CTriplet a)
+--  -> SparseMatrix n m a
+--fromVector tris =
+--  let !c_rs = toC $! natToInt @n
+--      !c_cs = toC $! natToInt @m
+--      !len  = toC $! VS.length tris
+--  in Internal.performIO $ VS.unsafeWith tris $ \p ->
+--       alloca $ \pq -> do
+--         Internal.call $ Internal.sparse_fromList c_rs c_cs p len pq
+--         peek pq >>= _mk
+
+
 
 -- | Convert a sparse matrix to a (n X m) dense list of values.
 toDenseList :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> [[a]]
@@ -483,6 +513,43 @@ unsafeGetRow row mat = unsafeBlock row 0 1 (natToInt @m) mat
 -- | Returns a single column of the sparse matrix. This is unsafe because it allows out-of-bounds access.
 unsafeGetCol :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Int -> SparseMatrix n m a -> SparseMatrix n 1 a
 unsafeGetCol col mat = unsafeBlock 0 col (natToInt @n) 1 mat
+
+-- | Get a sparse matrix from a list of columns.
+--   This operation is unsafe because we cannot unify the length of the list with the type variable 'm'.
+unsafeFromCols :: forall n m a. (Elem a, KnownNat n, KnownNat m) => [SparseMatrix n 1 a] -> SparseMatrix n m a
+unsafeFromCols [] = fromListSized 0 0 []
+unsafeFromCols _cols = fromListSized n m . concatMap toList . zipWith updateColIdx [0..] $ _cols
+  where
+    n = maximum . fmap _unsafeRows $ _cols
+    m = length _cols
+
+-- | Get a sparse matrix from a list of rows.
+--   This operation is unsafe because we cannot unify the length of the list with the type variable 'n'.
+unsafeFromRows :: forall n m a. (Elem a, KnownNat n, KnownNat m) => [SparseMatrix 1 m a] -> SparseMatrix n m a
+unsafeFromRows [] = fromListSized 0 0 []
+unsafeFromRows _rows = fromListSized n m . concatMap toList . zipWith updateRowIdx [0..] $ _rows
+  where
+    n = length _rows
+    m = maximum . fmap _unsafeCols $ _rows
+
+-- | Update the row indices of a sparse matrix.
+updateRowIdx :: forall n m a. (KnownNat n, KnownNat m, Elem a) => Int -> SparseMatrix n m a -> SparseMatrix n m a
+updateRowIdx row mat = fromListSized n m . fmap (\(_, j, v) -> (row, j, v)) . toList $ mat
+  where
+    n = row + 1
+    m = _unsafeCols mat
+
+-- | Update the column indices of a sparse matrix.
+updateColIdx :: forall n m a. (KnownNat n, KnownNat m, Elem a) => Int -> SparseMatrix n m a -> SparseMatrix n m a
+updateColIdx col mat = fromListSized n m . fmap (\(i, _, v) -> (i, col, v)) . toList $ mat
+  where
+    n = _unsafeRows mat
+    m = col + 1
+
+--fromRows :: forall n m a. (Elem a, KnownNat n, KnownNat m)
+--  => [SparseMatrix 1 m a]
+--  -> SparseMatrix n m a
+
 
 _unop :: Storable b => (CSparseMatrixPtr a -> Ptr b -> IO CString) -> (b -> IO c) -> SparseMatrix n m a -> c
 _unop f g (SparseMatrix fp) = Internal.performIO $
