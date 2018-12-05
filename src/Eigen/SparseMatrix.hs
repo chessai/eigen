@@ -30,6 +30,10 @@ module Eigen.SparseMatrix
   , (!)
   , getRow
   , getCol
+  , getRows
+  , getCols
+  , unsafeGetCol
+  , unsafeGetRow
 
     -- * Matrix conversions
   , fromList
@@ -261,6 +265,21 @@ squaredNorm = _unop Internal.sparse_squaredNorm (pure . fromC)
 blueNorm :: Elem a => SparseMatrix n m a -> a
 blueNorm = _unop Internal.sparse_blueNorm (pure . fromC)
 
+unsafeBlock ::
+     (Elem a)
+  => Int
+  -> Int
+  -> Int
+  -> Int
+  -> SparseMatrix n m a
+  -> SparseMatrix n1 m1 a
+unsafeBlock !sr !sc !br !bc =
+  let !c_startRow = toC $! sr
+      !c_startCol = toC $! sc
+      !c_rows     = toC $! br
+      !c_cols     = toC $! bc
+  in _unop (\p pq -> Internal.sparse_block p c_startRow c_startCol c_rows c_cols pq) _mk
+
 -- | Extract a rectangular block from the sparse matrix, given a startRow, startCol, blockRows, blockCols
 block :: forall sr sc br bc n m a.
      (Elem a, KnownNat sr, KnownNat sc, KnownNat br, KnownNat bc, KnownNat n, KnownNat m)
@@ -448,6 +467,22 @@ getRow row mat = block row (Col @0) (Row @1) (Col @m) mat
 -- | Return a single column of the sparse matrix.
 getCol :: forall n m c a. (Elem a, KnownNat n, KnownNat m, KnownNat c, c <= m, 1 <= m) => Col c -> SparseMatrix n m a -> SparseMatrix n 1 a
 getCol col mat = block (Row @0) col (Row @n) (Col @1) mat
+
+-- | Return all rows of the sparse matrix.
+getRows :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> [SparseMatrix 1 m a]
+getRows mat = fmap (flip unsafeGetRow mat) [0 .. (natToInt @n) - 1]
+
+-- | Return all columns of a sparse matrix.
+getCols :: forall n m a. (Elem a, KnownNat n, KnownNat m) => SparseMatrix n m a -> [SparseMatrix n 1 a]
+getCols mat = fmap (flip unsafeGetCol mat) [0 .. (natToInt @m) - 1]
+
+-- | Returns a single row of the sparse matrix. This is unsafe because it allows out-of-bounds access.
+unsafeGetRow :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Int -> SparseMatrix n m a -> SparseMatrix 1 m a
+unsafeGetRow row mat = unsafeBlock row 0 1 (natToInt @m) mat
+
+-- | Returns a single column of the sparse matrix. This is unsafe because it allows out-of-bounds access.
+unsafeGetCol :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Int -> SparseMatrix n m a -> SparseMatrix n 1 a
+unsafeGetCol col mat = unsafeBlock 0 col (natToInt @n) 1 mat
 
 _unop :: Storable b => (CSparseMatrixPtr a -> Ptr b -> IO CString) -> (b -> IO c) -> SparseMatrix n m a -> c
 _unop f g (SparseMatrix fp) = Internal.performIO $
