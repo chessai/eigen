@@ -76,7 +76,6 @@ template<typename Derived> class MatrixBase
     using Base::coeffRef;
     using Base::lazyAssign;
     using Base::eval;
-    using Base::operator-;
     using Base::operator+=;
     using Base::operator-=;
     using Base::operator*=;
@@ -123,6 +122,7 @@ template<typename Derived> class MatrixBase
 
 #define EIGEN_CURRENT_STORAGE_BASE_CLASS Eigen::MatrixBase
 #define EIGEN_DOC_UNARY_ADDONS(X,Y)
+#   include "../plugins/CommonCwiseUnaryOps.h"
 #   include "../plugins/CommonCwiseBinaryOps.h"
 #   include "../plugins/MatrixCwiseUnaryOps.h"
 #   include "../plugins/MatrixCwiseBinaryOps.h"
@@ -268,8 +268,6 @@ template<typename Derived> class MatrixBase
     Derived& setIdentity();
     EIGEN_DEVICE_FUNC
     Derived& setIdentity(Index rows, Index cols);
-    EIGEN_DEVICE_FUNC Derived& setUnit(Index i);
-    EIGEN_DEVICE_FUNC Derived& setUnit(Index newSize, Index i);
 
     bool isIdentity(const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
     bool isDiagonal(const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
@@ -298,7 +296,7 @@ template<typename Derived> class MatrixBase
     EIGEN_DEVICE_FUNC inline bool operator!=(const MatrixBase<OtherDerived>& other) const
     { return cwiseNotEqual(other).any(); }
 
-    NoAlias<Derived,Eigen::MatrixBase > EIGEN_DEVICE_FUNC noalias();
+    NoAlias<Derived,Eigen::MatrixBase > noalias();
 
     // TODO forceAlignedAccess is temporarily disabled
     // Need to find a nicer workaround.
@@ -328,9 +326,7 @@ template<typename Derived> class MatrixBase
 
     inline const PartialPivLU<PlainObject> lu() const;
 
-    //chessai: removed because of ghc 
-    //inline const Inverse<Derived> inverse() const;
-    const Inverse<Derived> inverse() const;
+    inline const Inverse<Derived> inverse() const;
 
     template<typename ResultType>
     inline void computeInverseAndDetWithCheck(
@@ -432,10 +428,8 @@ template<typename Derived> class MatrixBase
 ///////// Jacobi module /////////
 
     template<typename OtherScalar>
-    EIGEN_DEVICE_FUNC
     void applyOnTheLeft(Index p, Index q, const JacobiRotation<OtherScalar>& j);
     template<typename OtherScalar>
-    EIGEN_DEVICE_FUNC
     void applyOnTheRight(Index p, Index q, const JacobiRotation<OtherScalar>& j);
 
 ///////// SparseCore module /////////
@@ -450,16 +444,24 @@ template<typename Derived> class MatrixBase
 ///////// MatrixFunctions module /////////
 
     typedef typename internal::stem_function<Scalar>::type StemFunction;
-    const MatrixExponentialReturnValue<Derived> exp() const;
+#define EIGEN_MATRIX_FUNCTION(ReturnType, Name, Description) \
+    /** \returns an expression of the matrix Description of \c *this. \brief This function requires the <a href="unsupported/group__MatrixFunctions__Module.html"> unsupported MatrixFunctions module</a>. To compute the coefficient-wise Description use ArrayBase::##Name . */ \
+    const ReturnType<Derived> Name() const;
+#define EIGEN_MATRIX_FUNCTION_1(ReturnType, Name, Description, Argument) \
+    /** \returns an expression of the matrix Description of \c *this. \brief This function requires the <a href="unsupported/group__MatrixFunctions__Module.html"> unsupported MatrixFunctions module</a>. To compute the coefficient-wise Description use ArrayBase::##Name . */ \
+    const ReturnType<Derived> Name(Argument) const;
+
+    EIGEN_MATRIX_FUNCTION(MatrixExponentialReturnValue, exp, exponential)
+    /** \brief Helper function for the <a href="unsupported/group__MatrixFunctions__Module.html"> unsupported MatrixFunctions module</a>.*/
     const MatrixFunctionReturnValue<Derived> matrixFunction(StemFunction f) const;
-    const MatrixFunctionReturnValue<Derived> cosh() const;
-    const MatrixFunctionReturnValue<Derived> sinh() const;
-    const MatrixFunctionReturnValue<Derived> cos() const;
-    const MatrixFunctionReturnValue<Derived> sin() const;
-    const MatrixSquareRootReturnValue<Derived> sqrt() const;
-    const MatrixLogarithmReturnValue<Derived> log() const;
-    const MatrixPowerReturnValue<Derived> pow(const RealScalar& p) const;
-    const MatrixComplexPowerReturnValue<Derived> pow(const std::complex<RealScalar>& p) const;
+    EIGEN_MATRIX_FUNCTION(MatrixFunctionReturnValue, cosh, hyperbolic cosine)
+    EIGEN_MATRIX_FUNCTION(MatrixFunctionReturnValue, sinh, hyperbolic sine)
+    EIGEN_MATRIX_FUNCTION(MatrixFunctionReturnValue, cos, cosine)
+    EIGEN_MATRIX_FUNCTION(MatrixFunctionReturnValue, sin, sine)
+    EIGEN_MATRIX_FUNCTION(MatrixSquareRootReturnValue, sqrt, square root)
+    EIGEN_MATRIX_FUNCTION(MatrixLogarithmReturnValue, log, logarithm)
+    EIGEN_MATRIX_FUNCTION_1(MatrixPowerReturnValue,        pow, power to \c p, const RealScalar& p)
+    EIGEN_MATRIX_FUNCTION_1(MatrixComplexPowerReturnValue, pow, power to \c p, const std::complex<RealScalar>& p)
 
   protected:
     EIGEN_DEVICE_FUNC MatrixBase() : Base() {}

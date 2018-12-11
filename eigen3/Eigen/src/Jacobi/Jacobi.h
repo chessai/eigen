@@ -37,20 +37,17 @@ template<typename Scalar> class JacobiRotation
     typedef typename NumTraits<Scalar>::Real RealScalar;
 
     /** Default constructor without any initialization. */
-    EIGEN_DEVICE_FUNC
     JacobiRotation() {}
 
     /** Construct a planar rotation from a cosine-sine pair (\a c, \c s). */
-    EIGEN_DEVICE_FUNC
     JacobiRotation(const Scalar& c, const Scalar& s) : m_c(c), m_s(s) {}
 
-    EIGEN_DEVICE_FUNC Scalar& c() { return m_c; }
-    EIGEN_DEVICE_FUNC Scalar c() const { return m_c; }
-    EIGEN_DEVICE_FUNC Scalar& s() { return m_s; }
-    EIGEN_DEVICE_FUNC Scalar s() const { return m_s; }
+    Scalar& c() { return m_c; }
+    Scalar c() const { return m_c; }
+    Scalar& s() { return m_s; }
+    Scalar s() const { return m_s; }
 
     /** Concatenates two planar rotation */
-    EIGEN_DEVICE_FUNC
     JacobiRotation operator*(const JacobiRotation& other)
     {
       using numext::conj;
@@ -59,27 +56,20 @@ template<typename Scalar> class JacobiRotation
     }
 
     /** Returns the transposed transformation */
-    EIGEN_DEVICE_FUNC
     JacobiRotation transpose() const { using numext::conj; return JacobiRotation(m_c, -conj(m_s)); }
 
     /** Returns the adjoint transformation */
-    EIGEN_DEVICE_FUNC
     JacobiRotation adjoint() const { using numext::conj; return JacobiRotation(conj(m_c), -m_s); }
 
     template<typename Derived>
-    EIGEN_DEVICE_FUNC
     bool makeJacobi(const MatrixBase<Derived>&, Index p, Index q);
-    EIGEN_DEVICE_FUNC
     bool makeJacobi(const RealScalar& x, const Scalar& y, const RealScalar& z);
 
-    EIGEN_DEVICE_FUNC
-    void makeGivens(const Scalar& p, const Scalar& q, Scalar* z=0);
+    void makeGivens(const Scalar& p, const Scalar& q, Scalar* r=0);
 
   protected:
-    EIGEN_DEVICE_FUNC
-    void makeGivens(const Scalar& p, const Scalar& q, Scalar* z, internal::true_type);
-    EIGEN_DEVICE_FUNC
-    void makeGivens(const Scalar& p, const Scalar& q, Scalar* z, internal::false_type);
+    void makeGivens(const Scalar& p, const Scalar& q, Scalar* r, internal::true_type);
+    void makeGivens(const Scalar& p, const Scalar& q, Scalar* r, internal::false_type);
 
     Scalar m_c, m_s;
 };
@@ -94,7 +84,6 @@ bool JacobiRotation<Scalar>::makeJacobi(const RealScalar& x, const Scalar& y, co
 {
   using std::sqrt;
   using std::abs;
-  typedef typename NumTraits<Scalar>::Real RealScalar;
   RealScalar deno = RealScalar(2)*abs(y);
   if(deno < (std::numeric_limits<RealScalar>::min)())
   {
@@ -143,7 +132,7 @@ inline bool JacobiRotation<Scalar>::makeJacobi(const MatrixBase<Derived>& m, Ind
   * \f$ V = \left ( \begin{array}{c} p \\ q \end{array} \right )\f$ yields:
   * \f$ G^* V = \left ( \begin{array}{c} r \\ 0 \end{array} \right )\f$.
   *
-  * The value of \a z is returned if \a z is not null (the default is null).
+  * The value of \a r is returned if \a r is not null (the default is null).
   * Also note that G is built such that the cosine is always real.
   *
   * Example: \include Jacobi_makeGivens.cpp
@@ -156,9 +145,9 @@ inline bool JacobiRotation<Scalar>::makeJacobi(const MatrixBase<Derived>& m, Ind
   * \sa MatrixBase::applyOnTheLeft(), MatrixBase::applyOnTheRight()
   */
 template<typename Scalar>
-void JacobiRotation<Scalar>::makeGivens(const Scalar& p, const Scalar& q, Scalar* z)
+void JacobiRotation<Scalar>::makeGivens(const Scalar& p, const Scalar& q, Scalar* r)
 {
-  makeGivens(p, q, z, typename internal::conditional<NumTraits<Scalar>::IsComplex, internal::true_type, internal::false_type>::type());
+  makeGivens(p, q, r, typename internal::conditional<NumTraits<Scalar>::IsComplex, internal::true_type, internal::false_type>::type());
 }
 
 
@@ -274,7 +263,6 @@ namespace internal {
   * \sa MatrixBase::applyOnTheLeft(), MatrixBase::applyOnTheRight()
   */
 template<typename VectorX, typename VectorY, typename OtherScalar>
-EIGEN_DEVICE_FUNC
 void apply_rotation_in_the_plane(DenseBase<VectorX>& xpr_x, DenseBase<VectorY>& xpr_y, const JacobiRotation<OtherScalar>& j);
 }
 

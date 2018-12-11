@@ -11,7 +11,7 @@
 #ifndef EIGEN_META_H
 #define EIGEN_META_H
 
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(__CUDA_ARCH__)
 #include <cfloat>
 #include <math_constants.h>
 #endif
@@ -97,28 +97,39 @@ template<> struct is_arithmetic<unsigned int>  { enum { value = true }; };
 template<> struct is_arithmetic<signed long>   { enum { value = true }; };
 template<> struct is_arithmetic<unsigned long> { enum { value = true }; };
 
-#if EIGEN_HAS_CXX11
-template<> struct is_arithmetic<signed long long>   { enum { value = true }; };
-template<> struct is_arithmetic<unsigned long long> { enum { value = true }; };
-using std::is_integral;
-#else
-template<typename T> struct is_integral               { enum { value = false }; };
-template<> struct is_integral<bool>                   { enum { value = true }; };
-template<> struct is_integral<char>                   { enum { value = true }; };
-template<> struct is_integral<signed char>            { enum { value = true }; };
-template<> struct is_integral<unsigned char>          { enum { value = true }; };
-template<> struct is_integral<signed short>           { enum { value = true }; };
-template<> struct is_integral<unsigned short>         { enum { value = true }; };
-template<> struct is_integral<signed int>             { enum { value = true }; };
-template<> struct is_integral<unsigned int>           { enum { value = true }; };
-template<> struct is_integral<signed long>            { enum { value = true }; };
-template<> struct is_integral<unsigned long>          { enum { value = true }; };
-#if EIGEN_COMP_MSVC
-template<> struct is_integral<signed __int64>         { enum { value = true }; };
-template<> struct is_integral<unsigned __int64>       { enum { value = true }; };
-#endif
-#endif
+template<typename T> struct is_integral        { enum { value = false }; };
+template<> struct is_integral<bool>            { enum { value = true }; };
+template<> struct is_integral<char>            { enum { value = true }; };
+template<> struct is_integral<signed char>     { enum { value = true }; };
+template<> struct is_integral<unsigned char>   { enum { value = true }; };
+template<> struct is_integral<signed short>    { enum { value = true }; };
+template<> struct is_integral<unsigned short>  { enum { value = true }; };
+template<> struct is_integral<signed int>      { enum { value = true }; };
+template<> struct is_integral<unsigned int>    { enum { value = true }; };
+template<> struct is_integral<signed long>     { enum { value = true }; };
+template<> struct is_integral<unsigned long>   { enum { value = true }; };
 
+#if EIGEN_HAS_CXX11
+using std::make_unsigned;
+#else
+// TODO: Possibly improve this implementation of make_unsigned.
+// It is currently used only by
+// template<typename Scalar> struct random_default_impl<Scalar, false, true>.
+template<typename> struct make_unsigned;
+template<> struct make_unsigned<char>             { typedef unsigned char type; };
+template<> struct make_unsigned<signed char>      { typedef unsigned char type; };
+template<> struct make_unsigned<unsigned char>    { typedef unsigned char type; };
+template<> struct make_unsigned<signed short>     { typedef unsigned short type; };
+template<> struct make_unsigned<unsigned short>   { typedef unsigned short type; };
+template<> struct make_unsigned<signed int>       { typedef unsigned int type; };
+template<> struct make_unsigned<unsigned int>     { typedef unsigned int type; };
+template<> struct make_unsigned<signed long>      { typedef unsigned long type; };
+template<> struct make_unsigned<unsigned long>    { typedef unsigned long type; };
+#if EIGEN_COMP_MSVC
+template<> struct make_unsigned<signed __int64>   { typedef unsigned __int64 type; };
+template<> struct make_unsigned<unsigned __int64> { typedef unsigned __int64 type; };
+#endif
+#endif
 
 template <typename T> struct add_const { typedef const T type; };
 template <typename T> struct add_const<T&> { typedef T& type; };
@@ -175,7 +186,7 @@ template<bool Condition, typename T=void> struct enable_if;
 template<typename T> struct enable_if<true,T>
 { typedef T type; };
 
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(__CUDA_ARCH__)
 #if !defined(__FLT_EPSILON__)
 #define __FLT_EPSILON__ FLT_EPSILON
 #define __DBL_EPSILON__ DBL_EPSILON
@@ -278,7 +289,7 @@ template<> struct numeric_limits<unsigned long long>
 #endif
 
 /** \internal
-  * A base class do disable default copy ctor and copy assignment operator.
+  * A base class do disable default copy ctor and copy assignement operator.
   */
 class noncopyable
 {
@@ -288,59 +299,6 @@ protected:
   EIGEN_DEVICE_FUNC noncopyable() {}
   EIGEN_DEVICE_FUNC ~noncopyable() {}
 };
-
-/** \internal
-  * Provides access to the number of elements in the object of as a compile-time constant expression.
-  * It "returns" Eigen::Dynamic if the size cannot be resolved at compile-time (default).
-  *
-  * Similar to std::tuple_size, but more general.
-  *
-  * It currently supports:
-  *  - any types T defining T::SizeAtCompileTime
-  *  - plain C arrays as T[N]
-  *  - std::array (c++11)
-  *  - some internal types such as SingleRange and AllRange
-  *
-  * The second template parameter eases SFINAE-based specializations.
-  */
-template<typename T, typename EnableIf = void> struct array_size {
-  enum { value = Dynamic };
-};
-
-template<typename T> struct array_size<T,typename internal::enable_if<((T::SizeAtCompileTime&0)==0)>::type> {
-  enum { value = T::SizeAtCompileTime };
-};
-
-template<typename T, int N> struct array_size<const T (&)[N]> {
-  enum { value = N };
-};
-template<typename T, int N> struct array_size<T (&)[N]> {
-  enum { value = N };
-};
-
-#if EIGEN_HAS_CXX11
-template<typename T, std::size_t N> struct array_size<const std::array<T,N> > {
-  enum { value = N };
-};
-template<typename T, std::size_t N> struct array_size<std::array<T,N> > {
-  enum { value = N };
-};
-#endif
-
-/** \internal
-  * Analogue of the std::size free function.
-  * It returns the size of the container or view \a x of type \c T
-  *
-  * It currently supports:
-  *  - any types T defining a member T::size() const
-  *  - plain C arrays as T[N]
-  *
-  */
-template<typename T>
-Index size(const T& x) { return x.size(); }
-
-template<typename T,std::size_t N>
-Index size(const T (&) [N]) { return N; }
 
 /** \internal
   * Convenient struct to get the result type of a unary or binary functor.
@@ -439,10 +397,10 @@ struct meta_no  { char a[2]; };
 template <typename T>
 struct has_ReturnType
 {
-  template <typename C> static meta_yes testFunctor(C const *, typename C::ReturnType const * = 0);
-  template <typename C> static meta_no  testFunctor(...);
+  template <typename C> static meta_yes testFunctor(typename C::ReturnType const *);
+  template <typename C> static meta_no testFunctor(...);
 
-  enum { value = sizeof(testFunctor<T>(static_cast<T*>(0))) == sizeof(meta_yes) };
+  enum { value = sizeof(testFunctor<T>(0)) == sizeof(meta_yes) };
 };
 
 template<typename T> const T* return_ptr();
@@ -529,13 +487,13 @@ template<typename T, typename U> struct scalar_product_traits
 
 namespace numext {
   
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(__CUDA_ARCH__)
 template<typename T> EIGEN_DEVICE_FUNC   void swap(T &a, T &b) { T tmp = b; b = a; a = tmp; }
 #else
 template<typename T> EIGEN_STRONG_INLINE void swap(T &a, T &b) { std::swap(a,b); }
 #endif
 
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(__CUDA_ARCH__)
 using internal::device::numeric_limits;
 #else
 using std::numeric_limits;
