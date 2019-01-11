@@ -1,10 +1,12 @@
-{ compiler ? "ghc843" }:
+{ compiler ? "ghc843"
+, nixpkgs ? (import ./nix/nixpkgs.nix { inherit compiler; })
+}:
 
 with rec {
-  pkgs = (import ./nix/nixpkgs.nix {
-    inherit compiler; 
-  });
-  drv = pkgs.haskellPackages.eigen;
+#  nixpkgs = (import ./nix/nixpkgs.nix {
+#    inherit compiler; 
+#  });
+  drv = nixpkgs.haskellPackages.eigen;
 };
 
 drv

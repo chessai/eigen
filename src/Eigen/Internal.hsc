@@ -41,6 +41,7 @@ import           Data.Binary              (Binary(put,get))
 import           Data.Binary.Get          (getByteString, getWord32be)
 import           Data.Binary.Put          (putByteString, putWord32be)
 import           Data.Bits                (xor)
+import           Data.Coerce              (coerce)
 import           Data.Complex             (Complex((:+)))
 import           Data.Kind                (Type)
 import           Data.Proxy               (Proxy(Proxy))
@@ -50,10 +51,11 @@ import           Foreign.ForeignPtr       (ForeignPtr, castForeignPtr, withForei
 import           Foreign.Ptr              (Ptr, castPtr, nullPtr, plusPtr)
 import           Foreign.Storable         (Storable(sizeOf, alignment, poke, peek, peekByteOff, peekElemOff, pokeByteOff, pokeElemOff))
 import           GHC.TypeLits             (natVal, KnownNat, Nat)
+import           Refined.Unsafe.Type      (Refined(..))
 import           System.IO.Unsafe         (unsafeDupablePerformIO)
-import qualified Data.Vector.Storable     as VS
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Internal as BSI
+import qualified Data.Vector.Storable     as VS
 
 --------------------------------------------------------------------------------
 
@@ -66,6 +68,10 @@ data Col (c :: Nat) = Col
 natToInt :: forall n. KnownNat n => Int
 {-# INLINE natToInt #-}
 natToInt = fromIntegral (natVal @n Proxy)
+
+_unsafeRefine :: x -> Refined p x
+{-# INLINE _unsafeRefine #-}
+_unsafeRefine = coerce
 
 --------------------------------------------------------------------------------
 
