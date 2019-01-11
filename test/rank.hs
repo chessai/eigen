@@ -1,11 +1,16 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 import Eigen.Matrix
 import Eigen.Solver.LA
+import Refined
 
-a :: Maybe (MatrixXf 3 3)
-a = fromList [[1,2,5],[2,1,4],[3,0,3]]
+list :: Refined (SizeEqualTo 3) [Refined (SizeEqualTo 3) [Float]]
+list = $$(refineTH [$$(refineTH [1,2,5]) :: Refined (SizeEqualTo 3) [Float], $$(refineTH [2,1,4]), $$(refineTH [3,0,3])])
+
+a :: MatrixXf 3 3
+a = fromList list
 
 main :: IO ()
 main = do
@@ -13,10 +18,10 @@ main = do
     print a
 
     putStrLn "The rank of A is:"
-    print $ rank FullPivLU <$> a
+    print $ rank FullPivLU a
 
     putStrLn "Here is a matrix whose columns form a basis of the null-space of A:"
-    print $ kernel FullPivLU <$> a
+    print $ kernel FullPivLU a
 
     putStrLn "Here is a matrix whose columns form a basis of the column-space of A:"
-    print $ image FullPivLU <$> a
+    print $ image FullPivLU a

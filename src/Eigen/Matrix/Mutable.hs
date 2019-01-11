@@ -48,18 +48,17 @@ import Eigen.Internal
   ( Elem
   , C(..)
   , natToInt
-  , Row(..)
-  , Col(..)
   )
 
-import Prelude hiding (replicate, read)
 import Control.Monad.Primitive (PrimMonad(..))
 import Data.Complex (Complex)
 import Data.Kind (Type)
 import Foreign.C.Types (CInt)
 import Foreign.Ptr (Ptr)
 import GHC.Exts (RealWorld)
-import GHC.TypeLits (Nat, type (*), type (<=), KnownNat)
+import GHC.TypeLits (Nat, type (*), KnownNat)
+import Prelude hiding (replicate, read)
+import Refined
 import qualified Data.Vector.Storable.Mutable as VSM
 
 -- | A mutable matrix. See 'Eigen.Matrix.Matrix' for
@@ -113,22 +112,22 @@ copy :: (PrimMonad p, Elem a) => MMatrix n m (PrimState p) a -> MMatrix n m (Pri
 copy (MMatrix (Vec m1)) (MMatrix (Vec m2)) = VSM.unsafeCopy m1 m2
 
 -- | Yield the element at the given position.
-read :: forall n m p a r c. (PrimMonad p, Elem a, KnownNat n, KnownNat r, KnownNat c, r <= n, c <= m)
-  => Row r -> Col c -> MMatrix n m (PrimState p) a -> p a
+read :: forall n m p a. (PrimMonad p, Elem a, KnownNat n, KnownNat m)
+  => Refined (FromTo 0 n) Int -> Refined (FromTo 0 m) Int -> MMatrix n m (PrimState p) a -> p a
 {-# INLINE read #-}
-read _ _ (MMatrix (Vec m)) =
-  let !row = natToInt @r
-      !col = natToInt @c
+read r c (MMatrix (Vec m)) =
+  let !row = unrefine r
+      !col = unrefine c
       !mm_rows = natToInt @n
   in VSM.unsafeRead m (col * mm_rows + row) >>= \ !val -> let !cval = fromC val in pure cval
 
 -- | Replace the element at the given position.
-write :: forall n m p a r c. (PrimMonad p, Elem a, KnownNat n, KnownNat r, KnownNat c, r <= n, c <= m)
-  => Row r -> Col c -> MMatrix n m (PrimState p) a -> a -> p ()
+write :: forall n m p a. (PrimMonad p, Elem a, KnownNat n, KnownNat m)
+  => Refined (FromTo 0 n) Int -> Refined (FromTo 0 m) Int -> MMatrix n m (PrimState p) a -> a -> p ()
 {-# INLINE write #-}
-write _ _ (MMatrix (Vec m)) !val =
-  let !row = natToInt @r
-      !col = natToInt @c
+write r c (MMatrix (Vec m)) !val =
+  let !row = unrefine r
+      !col = unrefine c
       !mm_rows = natToInt @n
       !cval = toC val
   in VSM.unsafeWrite m (col * mm_rows + row) cval

@@ -111,26 +111,32 @@ library
     extra-libraries:
       stdc++
 
+Test-Suite test-sparse
+  type:               exitcode-stdio-1.0
+  main-is:            test/sparse.hs
+  default-language:   Haskell2010
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim, refined, th-lift-instances
+
 Test-Suite test-solve
   type:               exitcode-stdio-1.0
   main-is:            test/solve.hs
   default-language:   Haskell2010
-  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim, refined
 
 Test-Suite test-solve-sparse
   type:               exitcode-stdio-1.0
   main-is:            test/solve-sparse.hs
   default-language:   Haskell2010
-  build-depends:      base, primitive, vector, bytestring, transformers, mtl, binary, eigen
+  build-depends:      base, primitive, vector, bytestring, transformers, mtl, binary, eigen, refined
 
 Test-Suite test-rank
   type:               exitcode-stdio-1.0
   main-is:            test/rank.hs
   default-language:   Haskell2010
-  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim, refined
 
 Test-Suite test-regression
   type:               exitcode-stdio-1.0
   main-is:            test/regression.hs
   default-language:   Haskell2010
-  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim
+  build-depends:      base, primitive, vector, bytestring, transformers, binary, eigen, ghc-prim, refined

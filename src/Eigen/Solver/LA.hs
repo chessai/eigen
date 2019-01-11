@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE ExplicitNamespaces    #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE LambdaCase            #-}
@@ -8,6 +9,8 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 module Eigen.Solver.LA
   ( Decomposition(..)
@@ -24,9 +27,10 @@ import Eigen.Matrix
 import Foreign.C.Types (CInt)
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Storable (Storable(..))
-import GHC.TypeLits (KnownNat)
+import GHC.TypeLits (KnownNat, type (<=))
 import GHC.Types
 import Prelude
+import Refined
 import qualified Eigen.Internal as Internal
 import qualified Eigen.Matrix.Mutable as MM
 import qualified Eigen.Matrix as M
@@ -190,15 +194,15 @@ main = print $ linearRegression (Row @5)
  @
 
 -}
-linearRegression :: forall r. (KnownNat r)
-  => Internal.Row r
-  -- -> Internal.Col c
-  -> [[Double]]
-  -> Maybe ([Double], Double)
-linearRegression _ points = do
-  _a :: MatrixXd r 2 <- M.fromList $ List.map ((1:)  . tail) points
-  _b :: MatrixXd r 1 <- M.fromList $ List.map ((:[]) . head) points
-  let _x = solve ColPivHouseholderQR _a _b
-  let e  = relativeError _x _a _b
-  let coeffs = List.map head $ M.toList _x
-  return (coeffs, e)
+linearRegression :: forall n m. (KnownNat n, KnownNat m, 1 <= n, 1 <= m)
+  => Refined (SizeEqualTo n) [Refined (SizeEqualTo m) [Double]]
+  -> ([Double], Double)
+linearRegression (((fmap unrefine) . unrefine) -> points) =
+  let _a :: MatrixXd n m
+      _a = M.fromList $ Internal._unsafeRefine $ List.map (Internal._unsafeRefine . (1:)  . tail) points
+      _b :: MatrixXd n 1
+      _b = M.fromList $ Internal._unsafeRefine $ List.map (Internal._unsafeRefine . (:[]) . head) points
+      _x = solve ColPivHouseholderQR _a _b
+      e  = relativeError _x _a _b
+      coeffs = List.map head $ M.toList _x
+  in (coeffs, e)

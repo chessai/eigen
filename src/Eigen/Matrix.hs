@@ -15,6 +15,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Eigen.Matrix
   ( 
@@ -30,18 +31,14 @@ module Eigen.Matrix
   , Elem
   , C
   , natToInt
-  , Row(..)
-  , Col(..)
-
-    -- * Encode/Decode a Matrix
---  , encode
---  , decode
 
     -- * Querying a Matrix
   , null
   , square
   , rows
   , cols
+  , rows'
+  , cols'
   , dims
     
     -- * Constructing a Matrix
@@ -91,17 +88,17 @@ module Eigen.Matrix
   , unsafeWith
   , fromList
   , toList
+  , toList'
   ) where
 
 import Control.Monad (forM_)
-import Control.Monad (when)
 import Control.Monad.Primitive (PrimMonad(..))
 import Control.Monad.ST (ST)
-import Data.Binary (Binary(..))
 import Data.Coerce (coerce)
 import Data.Complex (Complex)
 import Data.Constraint.Nat
 import Data.Kind (Type)
+import Data.Proxy (Proxy(..))
 import Foreign.C.String (CString)
 import Foreign.C.Types (CInt)
 import Foreign.Marshal.Alloc (alloca)
@@ -110,9 +107,6 @@ import Foreign.Storable (peek)
 import GHC.TypeLits (Nat, type (*), type (<=), KnownNat)
 import Prelude hiding (map, null, filter, length, foldl, any, all, sum)
 import Refined
-import Refined.Unsafe.Type (Refined(..))
-import qualified Data.Binary as Binary
-import qualified Data.ByteString.Lazy as BSL
 import qualified Data.List as List
 import qualified Data.Vector.Storable as VS
 import qualified Data.Vector.Storable.Mutable as VSM
@@ -121,8 +115,7 @@ import Eigen.Internal
   ( Elem
   , Cast(..)
   , natToInt
-  , Row(..)
-  , Col(..)
+  , _unsafeRefine
   )
 import qualified Eigen.Internal as Internal
 import qualified Eigen.Matrix.Mutable as M
@@ -146,27 +139,6 @@ instance forall n m a. (Elem a, Show a, KnownNat n, KnownNat m) => Show (Matrix 
     , "\n", List.intercalate "\n" $ List.map (List.intercalate "\t" . List.map show) $ toList m, "\n"
     ]
 
-{-
-instance forall n m a. (KnownNat n, KnownNat m, Elem a) => Binary (Matrix n m a) where
-  put (Matrix (Vec vals)) = do
-    put $ Internal.magicCode (undefined :: C a)
-    put $ natToInt @n
-    put $ natToInt @m
-    put vals
-
-  get = do
-    get >>= (`when` fail "wrong matrix type") . (/= Internal.magicCode (undefined :: C a))
-    Matrix . Vec <$> get
-
--- | Encode the sparse matrix as a lazy bytestring
-encode :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> BSL.ByteString
-encode = Binary.encode
-
--- | Decode the sparse matrix from a lazy bytestring
-decode :: (Elem a, KnownNat n, KnownNat m) => BSL.ByteString -> Matrix n m a
-decode = Binary.decode
--}
-
 -- | Alias for single precision matrix
 type MatrixXf n m = Matrix n m Float
 -- | Alias for double precision matrix
@@ -179,7 +151,7 @@ type MatrixXcd n m = Matrix n m (Complex Double)
 -- | Construct an empty 0x0 matrix
 empty :: Elem a => Matrix 0 0 a
 {-# INLINE empty #-}
-empty = Matrix (Vec (VS.empty))
+empty = _unsafeMatrix (VS.empty)
 
 -- | Is matrix empty?
 --
@@ -236,7 +208,7 @@ withDims :: forall n m a. (Elem a, KnownNat n, KnownNat m) => (Int -> Int -> VS.
 withDims f =
   let !r = natToInt @n
       !c = natToInt @m
-  in Matrix $ Vec $ f r c
+  in _unsafeMatrix $ f r c
 
 -- | The number of rows in the matrix, wrapped in a refinement.
 rows' :: forall n m a. KnownNat n => Matrix n m a -> Refined (EqualTo n) Int
@@ -264,22 +236,25 @@ dims :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> (Int, 
 {-# INLINE dims #-}
 dims _ = (natToInt @n, natToInt @m)
 
--- | Return the value at the given position.
-(!) :: forall n m a r c. (Elem a, KnownNat n, KnownNat r, KnownNat c, r <= n, c <= m) => Row r -> Col c -> Matrix n m a -> a
+-- | Matrix coefficient at the given row and column
+(!) :: forall n m a. (Elem a, KnownNat n, KnownNat m)
+  => Matrix n m a
+  -> (Refined (FromTo 0 n) Int, Refined (FromTo 0 m) Int)
+  -> a
 {-# INLINE (!) #-}
-(!) = coeff
+(!) m (row,col) = coeff row col m
 
 -- | Return the value at the given position.
-coeff :: forall n m a r c. (Elem a, KnownNat n, KnownNat r, KnownNat c, r <= n, c <= m) => Row r -> Col c -> Matrix n m a -> a
+coeff :: forall n m a. (Elem a, KnownNat n, KnownNat m)
+  => Refined (FromTo 0 n) Int
+  -> Refined (FromTo 0 m) Int
+  -> Matrix n m a
+  -> a
 {-# INLINE coeff #-}
-coeff _ _ m@(Matrix (Vec vals)) =
-  let !row  = natToInt @r
-      !col  = natToInt @c
+coeff r c m@(_unwrapMatrix -> vals) =
+  let !row  = unrefine r
+      !col  = unrefine c
   in fromC $! VS.unsafeIndex vals $! col * rows m + row
-
-unsafeCoeff :: (Elem a, KnownNat n) => Int -> Int -> Matrix n m a -> a
-{-# INLINE unsafeCoeff #-}
-unsafeCoeff row col m@(Matrix (Vec vals)) = fromC $! VS.unsafeIndex vals $! col * rows m + row
 
 -- | Given a generation function `f :: Int -> Int -> a`, construct a Matrix of known size
 --   using points in the matrix as inputs.
@@ -311,15 +286,15 @@ trace = _prop Internal.trace
 
 -- | Given a predicate p, determine if all values in the Matrix satisfy p.
 all :: (Elem a, KnownNat n, KnownNat m) => (a -> Bool) -> Matrix n m a -> Bool
-all f (Matrix (Vec vals)) = VS.all (f . fromC) vals
+all f (_unwrapMatrix -> vals) = VS.all (f . fromC) vals
 
 -- | Given a predicate p, determine if any values in the Matrix satisfy p.
 any :: (Elem a, KnownNat n, KnownNat m) => (a -> Bool) -> Matrix n m a -> Bool
-any f (Matrix (Vec vals)) = VS.any (f . fromC) vals
+any f (_unwrapMatrix -> vals) = VS.any (f . fromC) vals
 
 -- | Given a predicate p, determine how many values in the Matrix satisfy p.
 count :: (Elem a, KnownNat n, KnownNat m) => (a -> Bool) -> Matrix n m a -> Int
-count f (Matrix (Vec vals)) = VS.foldl' (\n x-> if f (fromC x) then (n + 1) else n) 0 vals
+count f (_unwrapMatrix -> vals) = VS.foldl' (\n x-> if f (fromC x) then (n + 1) else n) 0 vals
 
 norm, squaredNorm, blueNorm, hypotNorm :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> a
 
@@ -368,7 +343,7 @@ Matrix 2x2
 30.0    40.0
 -}
 map :: Elem a => (a -> a) -> Matrix n m a -> Matrix n m a
-map f (Matrix (Vec vals)) = Matrix $ Vec $ VS.map (toC . f . fromC) vals
+map f (_unwrapMatrix -> vals) = _unsafeMatrix $ VS.map (toC . f . fromC) vals
 
 {- | Apply a given function to each element of the matrix.
 Here is an example how upper triangular matrix can be implemented:
@@ -385,7 +360,7 @@ Matrix 3x3
 0.0 0.0 9.0
 -}
 imap :: (Elem a, KnownNat n, KnownNat m) => (Int -> Int -> a -> a) -> Matrix n m a -> Matrix n m a
-imap f (Matrix (Vec vals)) =
+imap f (_unwrapMatrix -> vals) =
   withDims $ \rs _ ->
     VS.imap (\n ->
       let (c,r) = divMod n rs
@@ -426,16 +401,16 @@ ifilter :: (Elem a, KnownNat n, KnownNat m) => (Int -> Int -> a -> Bool) -> Matr
 ifilter f = imap (\r c x -> if f r c x then x else 0)
 
 -- | The length of the matrix.
-length :: forall n m a r. (Elem a, KnownNat n, KnownNat m, r ~ (n * m), KnownNat r) => Matrix n m a -> Int
-length _ = natToInt @r
+length :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Int
+length _ = natToInt @n * natToInt @m
 
 -- | Left fold of a matrix, where accumulation is lazy.
 foldl :: (Elem a, KnownNat n, KnownNat m) => (b -> a -> b) -> b -> Matrix n m a -> b
-foldl f b (Matrix (Vec vals)) = VS.foldl (\a x -> f a (fromC x)) b vals
+foldl f b (_unwrapMatrix -> vals) = VS.foldl (\a x -> f a (fromC x)) b vals
 
 -- | Right fold of a matrix, where accumulation is strict.
 foldl' :: Elem a => (b -> a -> b) -> b -> Matrix n m a -> b
-foldl' f b (Matrix (Vec vals)) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
+foldl' f b (_unwrapMatrix -> vals) = VS.foldl' (\ !a x -> f a (fromC x)) b vals
 
 -- | Return the diagonal of a matrix.
 diagonal :: (Elem a, KnownNat n, KnownNat m, r ~ Min n m, KnownNat r) => Matrix n m a -> Matrix r 1 a
@@ -461,42 +436,40 @@ conjugate = _unop Internal.conjugate
 
 -- | Normalise the matrix by dividing it on its 'norm'
 normalize :: forall n m a. (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Matrix n m a
-normalize (Matrix (Vec vals)) = Internal.performIO $ do
+normalize (_unwrapMatrix -> vals) = Internal.performIO $ do
   vals' <- VS.thaw vals
   VSM.unsafeWith vals' $ \p ->
     let !rs = natToInt @n
         !cs = natToInt @m
     in Internal.call $ Internal.normalize p (toC rs) (toC cs)
-  Matrix . Vec <$> VS.unsafeFreeze vals'
+  _unsafeMatrix <$> VS.unsafeFreeze vals'
 
 -- | Apply a destructive operation to a matrix. The operation will be performed in-place, if it is safe
 --   to do so - otherwise, it will create a copy of the matrix.
 modify :: (Elem a, KnownNat n, KnownNat m) => (forall s. M.MMatrix n m s a -> ST s ()) -> Matrix n m a -> Matrix n m a
-modify f (Matrix (Vec vals)) = Matrix $ Vec $ VS.modify (f . M.fromVector ) vals
+modify f (_unwrapMatrix -> vals) = _unsafeMatrix $ VS.modify (f . M.fromVector ) vals
 
--- | Extract rectangular block from matrix defined by startRow startCol blockRows blockCols
-block :: forall sr sc br bc n m a.
-     (Elem a, KnownNat sr, KnownNat sc, KnownNat br, KnownNat bc, KnownNat n, KnownNat m)
-  => (sr <= n, sc <= m, br <= n, bc <= m)
-  => Row sr -- ^ starting row
-  -> Col sc -- ^ starting col
-  -> Row br -- ^ block of rows
-  -> Col bc -- ^ block of cols
-  -> Matrix n m a -- ^ extract from this
-  -> Matrix br bc a -- ^ extraction
-block _ _ _ _ m =
-  let !startRow = natToInt @sr
-      !startCol = natToInt @sc
-  in generate $ \row col -> unsafeCoeff (startRow + row) (startCol + col) m
-
+block :: forall n m a br bc. (Elem a, KnownNat n, KnownNat m, KnownNat br, KnownNat bc, br <= n, bc <= m)
+  => Refined (FromTo 0 n) Int -- ^ starting row
+  -> Refined (FromTo 0 m) Int -- ^ starting col
+  -> Proxy br                 -- ^ block of rows
+  -> Proxy bc                 -- ^ block of cols
+  -> Matrix n m a       -- ^ extract from this
+  -> Matrix br bc a     -- ^ extraction
+{-# INLINE block #-}
+block sr sc _ _ m =
+  let !c_startRow = unrefine sr
+      !c_startCol = unrefine sc
+  in generate $ \row col -> coeff (_unsafeRefine $ c_startRow + row) (_unsafeRefine $ c_startCol + col) m
+  
 -- | Turn a mutable matrix into an immutable matrix without copying.
 --   The mutable matrix should not be modified after this conversion.
 unsafeFreeze :: (Elem a, KnownNat n, KnownNat m, PrimMonad p) => M.MMatrix n m (PrimState p) a -> p (Matrix n m a)
-unsafeFreeze m = VS.unsafeFreeze (M.vals m) >>= pure . Matrix . Vec
+unsafeFreeze m = VS.unsafeFreeze (M.vals m) >>= pure . _unsafeMatrix
   
 -- | Pass a pointer to the matrix's data to the IO action. The data may not be modified through the pointer.
 unsafeWith  :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> (Ptr (C a) -> CInt -> CInt -> IO b) -> IO b
-unsafeWith m@(Matrix (Vec (vals))) f =
+unsafeWith m@(_unwrapMatrix -> vals) f =
   VS.unsafeWith vals $ \p ->
     let !rs = toC $! rows m
         !cs = toC $! cols m
@@ -505,27 +478,27 @@ unsafeWith m@(Matrix (Vec (vals))) f =
 -- | Convert a matrix to a list.
 toList :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> [[a]]
 {-# INLINE toList #-}
-toList m@(Matrix (Vec vals))
+toList m@(_unwrapMatrix -> vals)
   | null m = []
   | otherwise = [[fromC $ vals `VS.unsafeIndex` (col * _rows + row) | col <- [0..pred _cols]] | row <- [0..pred _rows]]
   where
     !_rows = rows m
     !_cols = cols m
 
--- | Convert a list to a matrix. Returns 'Nothing' if the dimensions of the list do not match that
---   of the matrix.
-fromList :: forall n m a. (Elem a, KnownNat n, KnownNat m) => [[a]] -> Maybe (Matrix n m a)
-fromList list = do
-  let myRows = natToInt @n
-  let myCols = natToInt @m
-  let _rows  = List.length list
-  let _cols  = List.foldl' max 0 (List.map List.length list)
-  if ((myRows /= _rows) || (myCols /= _cols))
-    then Nothing
-    else (Just . Matrix . Vec) $ VS.create $ do
+-- | Convert a matrix to a list, wrapped in a refinement.
+toList' :: (Elem a, KnownNat n, KnownNat m) => Matrix n m a -> Refined (SizeEqualTo n) [Refined (SizeEqualTo m) [a]]
+toList' = _unsafeRefine . fmap _unsafeRefine . toList
+
+fromList :: forall n m a. (Elem a, KnownNat n, KnownNat m)
+  => Refined (SizeEqualTo n) [Refined (SizeEqualTo m) [a]]
+  -> Matrix n m a
+fromList (((fmap unrefine) . unrefine) -> list) =
+  let _rows = natToInt @n
+      _cols = natToInt @m
+  in _unsafeMatrix $ VS.create $ do
       vm <- VSM.replicate (_rows * _cols) (toC (0 :: a))
       forM_ (zip [0..] list) $ \(row,vals) ->
-        forM_ (zip [0..] vals) $ \(col, val) ->
+        forM_ (zip [0..] vals) $ \(col,val) ->
           VSM.write vm (col * _rows + row) (toC val)
       pure vm
 
@@ -566,5 +539,10 @@ _unop g m1 = Internal.performIO $ do
               vals1 rows1 cols1
   unsafeFreeze m0
 
-_unsafeRefine :: x -> Refined p x
-_unsafeRefine = coerce
+_unsafeMatrix :: VS.Vector (C a) -> Matrix n m a
+{-# INLINE _unsafeMatrix #-}
+_unsafeMatrix = coerce
+
+_unwrapMatrix :: Matrix n m a -> VS.Vector (C a)
+{-# INLINE _unwrapMatrix #-}
+_unwrapMatrix = coerce

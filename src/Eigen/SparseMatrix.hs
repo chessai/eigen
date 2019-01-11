@@ -99,15 +99,13 @@ module Eigen.SparseMatrix
   , uncompress
   , compressed
 
-    -- * Matrix serialisation
---  , encode
---  , decode
-
     -- * Mutable matrices
   , thaw
   , freeze
   , unsafeThaw
   , unsafeFreeze
+  
+  , StorableVectorSizeEqualTo 
   ) where
 
 import Control.Monad (guard, unless)
@@ -328,7 +326,7 @@ blueNorm :: Elem a => SparseMatrix n m a -> a
 {-# INLINE blueNorm #-}
 blueNorm = _unop Internal.sparse_blueNorm (pure . fromC)
 
-block :: forall n m a br bc. (Elem a, KnownNat n, KnownNat m, KnownNat br, KnownNat bc)
+block :: forall n m a br bc. (Elem a, KnownNat n, KnownNat m, KnownNat br, KnownNat bc, br <= n, bc <= m)
   => Refined (FromTo 0 n) Int -- ^ starting row
   -> Refined (FromTo 0 m) Int -- ^ starting col
   -> Proxy br                 -- ^ block of rows

@@ -1,19 +1,23 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables, TemplateHaskell #-}
 
 import qualified Eigen.Matrix as M
 import Eigen.SparseMatrix
 import Eigen.Solver.SparseLA as LA
 import Control.Monad.Trans
 import Data.Maybe
+import Refined
 
-matrices :: Maybe (SparseMatrixXd 3 3, SparseMatrixXd 3 1)
-matrices = do
-  a <- fromDenseList [[1,2,3], [4,5,6], [7,8,10]]
-  b <- fromDenseList [[3],[3],[4]]
-  pure (a, b)
+list1 :: Refined (SizeEqualTo 3) [Refined (SizeEqualTo 3) [Double]]
+list1 = $$(refineTH [$$(refineTH [1,2,3]) :: Refined (SizeEqualTo 3) [Double], $$(refineTH [4,5,6]), $$(refineTH [7,8,10])])
+
+list2 :: Refined (SizeEqualTo 3) [Refined (SizeEqualTo 1) [Double]]
+list2 = $$(refineTH [$$(refineTH [3]) :: Refined (SizeEqualTo 1) [Double], $$(refineTH [3]), $$(refineTH [4])])
+
+a = fromDenseList list1
+b = fromDenseList list2
 
 main :: IO ()
-main = flip (maybe (print "WRONG! WRONG! WRONG!")) matrices $ \(a,b) -> do
+main = do
   putStrLn "Here is the matrix A:"
   print a
 

@@ -20,6 +20,8 @@ module Eigen.SparseMatrix.Mutable
     -- * SparseMatrix properties
   , rows
   , cols
+  , rows'
+  , cols'
   , innerSize
   , outerSize
   , nonZeros
@@ -55,6 +57,7 @@ import Eigen.Internal
   , CSparseMatrix
   , CSparseMatrixPtr
   , natToInt
+  , _unsafeRefine
   )
 import qualified Eigen.Internal as Internal
 
@@ -107,7 +110,7 @@ innerSize = _prop Internal.sparse_innerSize (pure . fromC)
 
 -- | Returns the number of columns (resp. rows) of the matrix if the storage order is column majour (resp. row majour)
 outerSize :: (Elem a, PrimMonad p) => MSparseMatrix n m (PrimState p) a -> p Int
-{-# INLINE outterSize #-}
+{-# INLINE outerSize #-}
 outerSize = _prop Internal.sparse_outerSize (pure . fromC)
 
 -- | Returns whether or not the matrix is in compressed form.
